@@ -1,0 +1,7 @@
+QUOTEXSTUDIO - CENTRALIZED ROUTE DIRECTORY
+
+Every accessible frontend route, sub-route, and API path within the Next.js application is documented in detail within the following file:
+
+📄 Location: [project_root]/routes.md
+
+This file serves as the definitive architectural reference for developers to navigate, track, and manage the QuoteXStudio routing structure and Role-Based Access Control (RBAC) protocols.
