@@ -67,8 +67,7 @@ export default function InvestmentsPage() {
     { id: "650000000000000000000003", name: "Saifur Rahman" },
   ];
 
-  // Dynamic state loaded from DB
-  const [dbCoFounders, setDbCoFounders] = useState<{_id: string, name: string}[]>([]);
+
 
   // Form State
   const [amountBDT, setAmountBDT] = useState("");
@@ -81,14 +80,22 @@ export default function InvestmentsPage() {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [reportData, setReportData] = useState<any>(null);
+  // Simplified Filter State
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [timeframeFilter, setTimeframeFilter] = useState("ALL");
+  const [startDateFilter, setStartDateFilter] = useState(new Date().toISOString().split("T")[0]);
+
   const { socket } = useSocket();
 
   useEffect(() => {
-    fetchInvestments();
-    fetchCoFounders();
     fetchReports();
     fetchLiveExchangeRate().then(rate => setExchangeRate(rate.toString()));
   }, []);
+
+  // Fetch data on filter change
+  useEffect(() => {
+    fetchInvestments();
+  }, [statusFilter, timeframeFilter, startDateFilter]);
 
   useEffect(() => {
     if (!socket) return;
@@ -102,23 +109,21 @@ export default function InvestmentsPage() {
     };
   }, [socket]);
 
-  const fetchCoFounders = async () => {
-    try {
-      const res = await fetch("/api/users");
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        const coFounders = data.filter(u => u.role === "CO_FOUNDER" || u.role === "SUPER_ADMIN");
-        setDbCoFounders(coFounders);
-      }
-    } catch (err) {
-      console.error("Failed to fetch founders", err);
-    }
-  };
+
 
   const fetchInvestments = async () => {
     setIsContentLoading(true);
     try {
-      const res = await fetch("/api/investments");
+      const params = new URLSearchParams();
+      if (statusFilter !== "ALL") params.append("status", statusFilter);
+      if (timeframeFilter !== "ALL") {
+        params.append("timeframe", timeframeFilter);
+        if (timeframeFilter === "SPECIFIC") {
+          params.append("startDate", startDateFilter);
+        }
+      }
+
+      const res = await fetch(`/api/investments?${params.toString()}`);
       const json = await res.json();
       if (res.ok) setInvestments(json || []);
     } catch (err) { console.error(err); }
@@ -424,24 +429,68 @@ export default function InvestmentsPage() {
         />
       </div>
 
-      {/* Investments Table */}
-      <div className="bg-[#0f0f0f] border border-white/5 rounded-2xl shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-white/5 flex items-center justify-between">
-          <div className="flex items-center gap-3 bg-[#141414] border border-white/5 rounded-xl px-3 py-2 w-full max-w-sm group focus-within:border-primary/50 transition-all">
-            <Search className="w-4 h-4 text-gray-500" />
-            <input 
-              type="text" 
-              placeholder="Search by note or founder..." 
-              className="bg-transparent text-sm text-white placeholder:text-gray-600 outline-none w-full"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <button className="p-2 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-colors">
-              <Filter className="w-4 h-4" />
-            </button>
+      {/* Investments Table Container */}
+      <div className="bg-[#0f0f0f] border border-white/5 rounded-2xl shadow-sm overflow-visible">
+        {/* Simplified Filter Bar */}
+        <div className="p-4 border-b border-white/5 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* Status Filter */}
+            <select 
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-[#141414] border border-white/5 rounded-xl px-4 py-2.5 text-xs font-bold text-gray-400 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all appearance-none cursor-pointer hover:bg-[#1c1c1c] min-w-[150px] text-center uppercase tracking-widest shadow-inner hover:text-white"
+            >
+              <option value="ALL">All Status</option>
+              <option value="PENDING">Pending</option>
+              <option value="CLEARED">Cleared</option>
+            </select>
+
+            {/* Timeframe Filter */}
+            <select 
+              value={timeframeFilter}
+              onChange={(e) => setTimeframeFilter(e.target.value)}
+              className="bg-[#141414] border border-white/5 rounded-xl px-4 py-2.5 text-xs font-bold text-gray-400 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all appearance-none cursor-pointer hover:bg-[#1c1c1c] min-w-[150px] text-center uppercase tracking-widest shadow-inner hover:text-white"
+            >
+              <option value="ALL">All Time</option>
+              <option value="TODAY">Today</option>
+              <option value="WEEK">This Week</option>
+              <option value="MONTH">This Month</option>
+              <option value="YEAR">This Year</option>
+              <option value="SPECIFIC">Specific Date</option>
+            </select>
+
+            {(statusFilter !== "ALL" || timeframeFilter !== "ALL") && (
+              <button 
+                onClick={() => {
+                  setStatusFilter("ALL");
+                  setTimeframeFilter("ALL");
+                  setStartDateFilter(new Date().toISOString().split("T")[0]);
+                }}
+                className="p-2.5 rounded-xl bg-primary/5 text-primary hover:bg-primary/10 border border-primary/10 transition-all font-black text-[10px] uppercase tracking-tighter"
+                title="Reset Filters"
+              >
+                Clear
+              </button>
+            )}
           </div>
         </div>
 
+        {/* Specific Date Picker */}
+        {timeframeFilter === "SPECIFIC" && (
+          <div className="p-4 bg-white/[0.02] border-b border-white/5 flex items-center justify-center gap-4 animate-in slide-in-from-top duration-300">
+            <div className="flex items-center gap-3 bg-[#111] px-4 py-2 rounded-xl border border-white/5 shadow-inner">
+              <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Select Date:</span>
+              <input 
+                type="date" 
+                value={startDateFilter}
+                onChange={(e) => setStartDateFilter(e.target.value)}
+                className="bg-transparent text-xs font-bold text-white outline-none [color-scheme:dark] cursor-pointer"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Table Content */}
         <div className="overflow-x-auto">
           <table className="w-full text-center border-collapse">
             <thead>
@@ -586,6 +635,7 @@ export default function InvestmentsPage() {
           </table>
         </div>
       </div>
+
 
       {/* Add Investment Modal Overlay */}
       {showAddForm && (

@@ -10,7 +10,7 @@ import { emitSocketEvent } from "@/lib/socket-emit";
 import { cache } from "@/lib/cache";
 import { logActivity } from "@/lib/audit";
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
 
   if (!session || !["SUPER_ADMIN", "CO_FOUNDER"].includes(session.user.role)) {
@@ -20,12 +20,62 @@ export async function GET() {
   await dbConnect();
 
   try {
-    const investments = await Investment.find({ isDeleted: false })
+    const { searchParams } = new URL(req.url);
+    const status = searchParams.get("status");
+    const timeframe = searchParams.get("timeframe");
+    const startDate = searchParams.get("startDate");
+
+    let query: any = { isDeleted: false };
+
+    // Status Filter
+    if (status && status !== "ALL") {
+      query["contributions.status"] = status;
+    }
+
+    // Timeframe Filter
+    if (timeframe && timeframe !== "ALL") {
+      const now = new Date();
+      let start: Date | null = null;
+      let end: Date = new Date();
+
+      switch (timeframe) {
+        case "TODAY":
+          start = new Date();
+          start.setHours(0, 0, 0, 0);
+          break;
+        case "WEEK":
+          start = new Date();
+          start.setDate(now.getDate() - 7);
+          break;
+        case "MONTH":
+          start = new Date();
+          start.setMonth(now.getMonth() - 1);
+          break;
+        case "YEAR":
+          start = new Date(now.getFullYear(), 0, 1);
+          break;
+        case "SPECIFIC":
+          if (startDate) {
+            start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            end = new Date(startDate);
+            end.setHours(23, 59, 59, 999);
+          }
+          break;
+      }
+
+      if (start) {
+        query.date = { $gte: start, $lte: end };
+      }
+    }
+
+    const investments = await Investment.find(query)
       .populate("contributions.coOwner", "name email image")
       .sort({ date: -1 });
 
     return NextResponse.json(investments);
   } catch (error) {
+    console.error("Fetch Error:", error);
     return NextResponse.json({ error: "Failed to fetch investments" }, { status: 500 });
   }
 }
