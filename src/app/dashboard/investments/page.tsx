@@ -67,8 +67,7 @@ export default function InvestmentsPage() {
     { id: "650000000000000000000003", name: "Saifur Rahman" },
   ];
 
-  // Dynamic state loaded from DB
-  const [dbCoFounders, setDbCoFounders] = useState<{_id: string, name: string}[]>([]);
+
 
   // Form State
   const [amountBDT, setAmountBDT] = useState("");
@@ -81,36 +80,22 @@ export default function InvestmentsPage() {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [reportData, setReportData] = useState<any>(null);
-  // Search & Filter State
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  // Simplified Filter State
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [timeframeFilter, setTimeframeFilter] = useState("ALL");
-  const [founderFilter, setFounderFilter] = useState("ALL");
-  const [customStartDate, setCustomStartDate] = useState("");
-  const [customEndDate, setCustomEndDate] = useState("");
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [startDateFilter, setStartDateFilter] = useState(new Date().toISOString().split("T")[0]);
 
   const { socket } = useSocket();
 
   useEffect(() => {
-    fetchCoFounders();
     fetchReports();
     fetchLiveExchangeRate().then(rate => setExchangeRate(rate.toString()));
   }, []);
 
-  // Debounce search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
   // Fetch data on filter change
   useEffect(() => {
     fetchInvestments();
-  }, [debouncedSearch, statusFilter, timeframeFilter, founderFilter, customStartDate, customEndDate]);
+  }, [statusFilter, timeframeFilter, startDateFilter]);
 
   useEffect(() => {
     if (!socket) return;
@@ -124,30 +109,18 @@ export default function InvestmentsPage() {
     };
   }, [socket]);
 
-  const fetchCoFounders = async () => {
-    try {
-      const res = await fetch("/api/users");
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        const coFounders = data.filter(u => u.role === "CO_FOUNDER" || u.role === "SUPER_ADMIN");
-        setDbCoFounders(coFounders);
-      }
-    } catch (err) {
-      console.error("Failed to fetch founders", err);
-    }
-  };
+
 
   const fetchInvestments = async () => {
     setIsContentLoading(true);
     try {
       const params = new URLSearchParams();
-      if (debouncedSearch) params.append("search", debouncedSearch);
       if (statusFilter !== "ALL") params.append("status", statusFilter);
-      if (timeframeFilter !== "ALL") params.append("timeframe", timeframeFilter);
-      if (founderFilter !== "ALL") params.append("coOwnerId", founderFilter);
-      if (timeframeFilter === "CUSTOM") {
-        if (customStartDate) params.append("startDate", customStartDate);
-        if (customEndDate) params.append("endDate", customEndDate);
+      if (timeframeFilter !== "ALL") {
+        params.append("timeframe", timeframeFilter);
+        if (timeframeFilter === "SPECIFIC") {
+          params.append("startDate", startDateFilter);
+        }
       }
 
       const res = await fetch(`/api/investments?${params.toString()}`);
@@ -458,79 +431,43 @@ export default function InvestmentsPage() {
 
       {/* Investments Table Container */}
       <div className="bg-[#0f0f0f] border border-white/5 rounded-2xl shadow-sm overflow-visible">
-        {/* Search & Filter Bar */}
-        <div className="p-4 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3 bg-[#141414] border border-white/5 rounded-xl px-4 py-2.5 w-full max-w-md group focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/5 transition-all shadow-inner">
-            <Search className={cn("w-4 h-4 transition-colors", searchTerm ? "text-primary" : "text-gray-500")} />
-            <input 
-              type="text" 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search note, ID, or amount..." 
-              className="bg-transparent text-sm text-white placeholder:text-gray-600 outline-none w-full font-medium"
-            />
-            {searchTerm && (
-              <button 
-                onClick={() => setSearchTerm("")}
-                className="text-gray-600 hover:text-white transition-colors"
-                title="Clear Search"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 relative">
+        {/* Simplified Filter Bar */}
+        <div className="p-4 border-b border-white/5 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex items-center gap-3">
             {/* Status Filter */}
             <select 
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-[#141414] border border-white/5 rounded-xl px-3 py-2.5 text-xs font-bold text-gray-400 outline-none focus:border-primary/50 transition-all appearance-none cursor-pointer hover:bg-[#1c1c1c] min-w-[120px] text-center uppercase tracking-widest"
+              className="bg-[#141414] border border-white/5 rounded-xl px-4 py-2.5 text-xs font-bold text-gray-400 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all appearance-none cursor-pointer hover:bg-[#1c1c1c] min-w-[150px] text-center uppercase tracking-widest shadow-inner hover:text-white"
             >
               <option value="ALL">All Status</option>
               <option value="PENDING">Pending</option>
               <option value="CLEARED">Cleared</option>
-              <option value="OVERDUE">Overdue</option>
             </select>
 
             {/* Timeframe Filter */}
             <select 
               value={timeframeFilter}
               onChange={(e) => setTimeframeFilter(e.target.value)}
-              className="bg-[#141414] border border-white/5 rounded-xl px-3 py-2.5 text-xs font-bold text-gray-400 outline-none focus:border-primary/50 transition-all appearance-none cursor-pointer hover:bg-[#1c1c1c] min-w-[140px] text-center uppercase tracking-widest"
+              className="bg-[#141414] border border-white/5 rounded-xl px-4 py-2.5 text-xs font-bold text-gray-400 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all appearance-none cursor-pointer hover:bg-[#1c1c1c] min-w-[150px] text-center uppercase tracking-widest shadow-inner hover:text-white"
             >
               <option value="ALL">All Time</option>
               <option value="TODAY">Today</option>
               <option value="WEEK">This Week</option>
               <option value="MONTH">This Month</option>
-              <option value="YTD">Year to Date</option>
-              <option value="CUSTOM">Custom Range</option>
+              <option value="YEAR">This Year</option>
+              <option value="SPECIFIC">Specific Date</option>
             </select>
 
-            {/* Stakeholder Filter */}
-            <select 
-              value={founderFilter}
-              onChange={(e) => setFounderFilter(e.target.value)}
-              className="bg-[#141414] border border-white/5 rounded-xl px-3 py-2.5 text-xs font-bold text-gray-400 outline-none focus:border-primary/50 transition-all appearance-none cursor-pointer hover:bg-[#1c1c1c] min-w-[160px] text-center uppercase tracking-widest"
-            >
-              <option value="ALL">All Founders</option>
-              {dbCoFounders.map(f => (
-                <option key={f._id} value={f._id}>{f.name}</option>
-              ))}
-            </select>
-
-            {(searchTerm || statusFilter !== "ALL" || timeframeFilter !== "ALL" || founderFilter !== "ALL") && (
+            {(statusFilter !== "ALL" || timeframeFilter !== "ALL") && (
               <button 
                 onClick={() => {
-                  setSearchTerm("");
                   setStatusFilter("ALL");
                   setTimeframeFilter("ALL");
-                  setFounderFilter("ALL");
-                  setCustomStartDate("");
-                  setCustomEndDate("");
+                  setStartDateFilter(new Date().toISOString().split("T")[0]);
                 }}
-                className="p-2.5 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border border-rose-500/20 transition-all font-black text-[10px] uppercase tracking-tighter"
-                title="Clear All Filters"
+                className="p-2.5 rounded-xl bg-primary/5 text-primary hover:bg-primary/10 border border-primary/10 transition-all font-black text-[10px] uppercase tracking-tighter"
+                title="Reset Filters"
               >
                 Clear
               </button>
@@ -538,25 +475,16 @@ export default function InvestmentsPage() {
           </div>
         </div>
 
-        {/* Custom Date Range Picker - Animated Expansion */}
-        {timeframeFilter === "CUSTOM" && (
+        {/* Specific Date Picker */}
+        {timeframeFilter === "SPECIFIC" && (
           <div className="p-4 bg-white/[0.02] border-b border-white/5 flex items-center justify-center gap-4 animate-in slide-in-from-top duration-300">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black text-gray-500 uppercase">From:</span>
+            <div className="flex items-center gap-3 bg-[#111] px-4 py-2 rounded-xl border border-white/5 shadow-inner">
+              <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Select Date:</span>
               <input 
                 type="date" 
-                value={customStartDate}
-                onChange={(e) => setCustomStartDate(e.target.value)}
-                className="bg-[#141414] border border-white/5 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-primary/50 [color-scheme:dark]"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black text-gray-500 uppercase">To:</span>
-              <input 
-                type="date" 
-                value={customEndDate}
-                onChange={(e) => setCustomEndDate(e.target.value)}
-                className="bg-[#141414] border border-white/5 rounded-lg px-3 py-1.5 text-xs text-white outline-none focus:border-primary/50 [color-scheme:dark]"
+                value={startDateFilter}
+                onChange={(e) => setStartDateFilter(e.target.value)}
+                className="bg-transparent text-xs font-bold text-white outline-none [color-scheme:dark] cursor-pointer"
               />
             </div>
           </div>
