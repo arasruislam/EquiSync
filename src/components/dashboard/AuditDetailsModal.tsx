@@ -1,7 +1,8 @@
 "use client";
 
-import { X, Search, Clock, User, ArrowRight, History, Database, Code } from "lucide-react";
-import { formatDate, cn } from "@/lib/utils";
+import { X, Clock, User, History, Database, Code } from "lucide-react";
+import { formatDate, cn, getAuditDescription } from "@/lib/utils";
+import { AuditTraceView } from "@/components/audit/AuditTraceView";
 
 interface AuditDetailsModalProps {
   log: any;
@@ -11,22 +12,13 @@ interface AuditDetailsModalProps {
 export function AuditDetailsModal({ log, onClose }: AuditDetailsModalProps) {
   if (!log) return null;
 
-  const renderJsonValue = (value: any) => {
-    if (typeof value === "object" && value !== null) {
-      return (
-        <pre className="text-[10px] font-mono text-gray-400 bg-black/40 p-3 rounded-xl overflow-x-auto max-h-60 border border-white/5">
-          {JSON.stringify(value, null, 2)}
-        </pre>
-      );
-    }
-    return <span className="text-sm font-medium text-white">{String(value)}</span>;
-  };
+  // renderJsonValue removed in favor of AuditTraceView
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
+      {/* Viewport-Filling Overlay (Zero Gap) */}
       <div 
-        className="absolute inset-0 bg-[#050B18]/80 backdrop-blur-md transition-opacity duration-300 animate-in fade-in"
+        className="fixed inset-0 w-screen h-screen bg-[#050B18]/80 backdrop-blur-md transition-opacity duration-300 animate-in fade-in"
         onClick={onClose}
       />
 
@@ -41,7 +33,9 @@ export function AuditDetailsModal({ log, onClose }: AuditDetailsModalProps) {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-white tracking-tight">Audit Mutation Details</h3>
-                <p className="text-gray-500 text-sm font-medium">Granular state analysis for {log.action}</p>
+                <p className="text-gray-500 text-[11px] font-medium leading-relaxed max-w-md">
+                  {getAuditDescription(log.action, log.targetModel)}
+                </p>
               </div>
             </div>
             <button 
@@ -85,43 +79,10 @@ export function AuditDetailsModal({ log, onClose }: AuditDetailsModalProps) {
             </div>
           </div>
 
-          {/* Payload Comparison */}
+          {/* Payload Comparison - High Tech Trace */}
           {(log.oldValue || log.newValue) ? (
             <div className="space-y-4">
-              <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                <Code className="w-3.5 h-3.5" />
-                State Transformation Payload
-              </h4>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Previous State */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between px-2">
-                    <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Previous State</span>
-                  </div>
-                  <div className="bg-[#050B18] rounded-2xl border border-rose-500/10 p-4 ring-1 ring-rose-500/20">
-                    {log.oldValue ? renderJsonValue(log.oldValue) : (
-                      <div className="h-20 flex items-center justify-center text-gray-700 italic text-sm">
-                        No previous record found (Create op)
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* New State */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between px-2">
-                    <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Mutation Result</span>
-                  </div>
-                  <div className="bg-[#050B18] rounded-2xl border border-emerald-500/10 p-4 ring-1 ring-emerald-500/20">
-                    {log.newValue ? renderJsonValue(log.newValue) : (
-                      <div className="h-20 flex items-center justify-center text-gray-700 italic text-sm">
-                        No final state captured (Delete op)
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <AuditTraceView oldValue={log.oldValue} newValue={log.newValue} />
             </div>
           ) : (
             <div className="p-20 flex flex-col items-center justify-center text-center bg-white/[0.01] rounded-[32px] border border-dashed border-white/5">
