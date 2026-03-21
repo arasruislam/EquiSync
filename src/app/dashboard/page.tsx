@@ -13,9 +13,10 @@ import {
   Plus,
   ShieldCheck,
   TrendingDown,
-  Activity
+  Activity,
+  ArrowRight
 } from "lucide-react";
-import { formatCurrency, formatDate, cn } from "@/lib/utils";
+import { formatCurrency, formatDate, cn, getAuditDescription } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSocket } from "@/components/providers/SocketProvider";
@@ -25,6 +26,7 @@ import { SummaryWidget } from "@/components/dashboard/SummaryWidget";
 import Image from "next/image";
 import { useGlobalLoading } from "@/components/providers/LoadingProvider";
 import { AuditDetailsModal } from "@/components/dashboard/AuditDetailsModal";
+import { AuditTraceView } from "@/components/audit/AuditTraceView";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -251,7 +253,9 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8">
         {/* Projects Table Partial */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between px-2">
@@ -296,7 +300,7 @@ export default function DashboardPage() {
             </table>
           </div>
         </div>
-
+        
         {/* Financial & Audit Stacks */}
         <div className="space-y-8 flex flex-col">
           {/* Financial Ledger Widget */}
@@ -311,40 +315,40 @@ export default function DashboardPage() {
                   <p className="text-center text-gray-600 text-sm italic py-8">No recent activity.</p>
                 ) : (
                   recentLedger?.map((activity: any) => (
-                  <div key={activity._id} className="flex gap-4 group">
-                    <div className="relative">
-                      <div className={cn(
-                        "w-8 h-8 rounded-full border flex items-center justify-center shrink-0 transition-all",
-                        activity.direction === "CREDIT" ? "bg-blue-500/10 border-blue-500/20 text-blue-500" : "bg-rose-500/10 border-rose-500/20 text-rose-500"
-                      )}>
-                        {activity.direction === "CREDIT" ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                    <div key={activity._id} className="flex gap-4 group">
+                      <div className="relative">
+                        <div className={cn(
+                          "w-8 h-8 rounded-full border flex items-center justify-center shrink-0 transition-all",
+                          activity.direction === "CREDIT" ? "bg-blue-500/10 border-blue-500/20 text-blue-500" : "bg-rose-500/10 border-rose-500/20 text-rose-500"
+                        )}>
+                          {activity.direction === "CREDIT" ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                        </div>
+                      </div>
+                      <div className="space-y-0.5 py-0.5">
+                        <p className="text-xs text-gray-300 font-bold uppercase tracking-tight leading-relaxed">
+                          {activity.description}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] text-gray-600 font-black uppercase tracking-widest">{activity.type}</span>
+                          <span className="text-[9px] text-gray-800">•</span>
+                          <span className="text-[9px] text-gray-600 font-bold uppercase">{formatDate(activity.date)}</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="space-y-0.5 py-0.5">
-                      <p className="text-xs text-gray-300 font-bold uppercase tracking-tight leading-relaxed">
-                        {activity.description}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-gray-600 font-black uppercase tracking-widest">{activity.type}</span>
-                        <span className="text-[9px] text-gray-800">•</span>
-                        <span className="text-[9px] text-gray-600 font-bold uppercase">{formatDate(activity.date)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
+                  ))
+                )}
+              </div>
+              <Link 
+                href="/dashboard/ledger"
+                className="block w-full mt-8 py-3 bg-blue-600/5 hover:bg-blue-600/10 rounded-2xl text-center text-[10px] font-black uppercase tracking-widest text-blue-400 border border-blue-500/10 transition-all"
+              >
+                Full Ledger Analysis
+              </Link>
             </div>
-            <Link 
-              href="/dashboard/ledger"
-              className="block w-full mt-8 py-3 bg-blue-600/5 hover:bg-blue-600/10 rounded-2xl text-center text-[10px] font-black uppercase tracking-widest text-blue-400 border border-blue-500/10 transition-all"
-            >
-              Full Ledger Analysis
-            </Link>
           </div>
-        </div>
           
-        {/* Audit Trail Widget */}
-        <div className="space-y-4">
+          {/* Audit Trail Widget - COMPACT LIST */}
+          <div className="space-y-4">
             <div className="flex items-center justify-between px-2">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <Activity className="w-5 h-5 text-blue-500" />
@@ -358,10 +362,10 @@ export default function DashboardPage() {
                   <p className="text-center text-gray-600 text-sm italic py-8 font-medium">No record mutations detected.</p>
                 ) : (
                   recentAudit?.map((log: any) => (
-                    <div key={log._id} className="flex gap-4 group items-start relative">
+                    <div key={log._id} className="flex gap-4 items-start relative p-2 rounded-2xl transition-all cursor-pointer" onClick={() => setSelectedLog(log)}>
                       <div className="relative shrink-0">
                         {log.actor?.image ? (
-                          <div className="w-8 h-8 rounded-full border border-blue-500/20 overflow-hidden bg-blue-500/5 group-hover:border-blue-500 transition-all">
+                          <div className="w-8 h-8 rounded-full border border-blue-500/20 overflow-hidden bg-blue-500/5 transition-all">
                             <Image 
                               src={log.actor.image} 
                               alt={log.actor.name || "Actor"} 
@@ -381,17 +385,26 @@ export default function DashboardPage() {
                           <p className="text-xs text-gray-300 font-bold uppercase tracking-tight truncate max-w-[140px]">
                             <strong className="text-white">{log.actor?.name?.split(" ")[0]}</strong>: {log.action.replace(/_/g, " ")}
                           </p>
+                          <span className="text-[8px] text-gray-600 font-mono italic">{new Date(log.createdAt).toLocaleTimeString()}</span>
+                        </div>
+                        <p className="text-[10px] text-gray-500 font-medium leading-tight">
+                          {getAuditDescription(log.action, log.targetModel)}
+                        </p>
+                        <div className="flex items-center justify-between gap-2 w-full">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[9px] text-gray-600 font-black uppercase tracking-widest">{log.targetModel}</span>
+                            <span className="text-[9px] text-gray-800">•</span>
+                            <span className="text-[9px] text-gray-700 font-bold uppercase truncate max-w-[80px]">{log.targetId?.substring(0, 8) || "GLOBAL"}</span>
+                          </div>
                           <button 
-                            onClick={() => setSelectedLog(log)}
-                            className="text-[9px] font-black text-blue-500 hover:text-white transition-colors uppercase tracking-widest"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedLog(log);
+                            }}
+                            className="text-[8px] font-black text-blue-500 hover:text-white transition-colors uppercase tracking-[0.2em]"
                           >
                             Details
                           </button>
-                        </div>
-                        <div className="flex items-center gap-2 w-full">
-                          <span className="text-[9px] text-gray-600 font-black uppercase tracking-widest">{log.targetModel}</span>
-                          <span className="text-[9px] text-gray-800">•</span>
-                          <span className="text-[9px] text-gray-700 font-bold uppercase truncate max-w-[80px]">{log.targetId}</span>
                         </div>
                       </div>
                     </div>
@@ -402,7 +415,7 @@ export default function DashboardPage() {
                 href="/dashboard/activity"
                 className="block w-full mt-8 py-3 bg-blue-600/5 hover:bg-blue-600/10 rounded-2xl text-center text-[10px] font-black uppercase tracking-widest text-blue-400 border border-blue-500/10 transition-all font-black"
               >
-                View System Matrix
+                Go to System Audit
               </Link>
             </div>
           </div>
@@ -419,5 +432,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
- 
