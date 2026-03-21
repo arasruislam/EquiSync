@@ -6,7 +6,9 @@ import React from "react";
 
 interface SummaryWidgetProps {
   label: string;
-  value: number;
+  value?: number; // Legacy amountUSD
+  amountBDT?: number;
+  amountUSD?: number;
   icon: LucideIcon;
   themeColor: "blue" | "red" | "amber" | "emerald";
   description?: string;
@@ -47,6 +49,8 @@ const themeConfigs = {
 export function SummaryWidget({
   label,
   value,
+  amountBDT,
+  amountUSD,
   icon: Icon,
   themeColor,
   description,
@@ -92,10 +96,10 @@ export function SummaryWidget({
       <div className="relative z-10 space-y-1">
         <h3 className="text-2xl font-black text-white tracking-tight flex flex-col">
           <span className={cn("transition-colors duration-500 group-hover:text-white", theme.color)}>
-            {formatCurrency(value * exchangeRate, "BDT")}
+            {formatCurrency(amountBDT !== undefined ? amountBDT : (value || amountUSD || 0) * exchangeRate, "BDT")}
           </span>
           <span className="text-[10px] text-gray-400 font-bold opacity-70 mt-0.5">
-            ({formatCurrency(value, "USD")})
+            ({formatCurrency(amountUSD !== undefined ? amountUSD : (value || (amountBDT ? amountBDT / exchangeRate : 0)), "USD")})
           </span>
         </h3>
       </div>

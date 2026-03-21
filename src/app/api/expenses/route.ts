@@ -9,6 +9,7 @@ import { createLedgerEntry } from "@/lib/ledger";
 import { emitSocketEvent } from "@/lib/socket-emit";
 import { cache } from "@/lib/cache";
 import { logActivity } from "@/lib/audit";
+import { revalidatePath } from "next/cache";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -19,7 +20,7 @@ export async function GET() {
   try {
     const expenses = await Expense.find({ isDeleted: false })
       .populate("project", "title")
-      .sort({ date: -1 });
+      .sort({ date: -1, createdAt: -1 });
 
     return NextResponse.json(expenses);
   } catch (error) {
@@ -38,11 +39,11 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { category, amountBDT, amountUSD, exchangeRate, description, vendor, project, date } = body;
+    const { category, amountBDT, exchangeRate, description, vendor, project, date } = body;
 
-    // Reject payload if missing essential fields
-    if (!amountUSD || !amountBDT || !exchangeRate) {
-      return NextResponse.json({ error: "Missing required fields: amountUSD, amountBDT, exchangeRate" }, { status: 400 });
+    // Reject payload if missing essential fields (BDT is SSOT)
+    if (!amountBDT || !exchangeRate) {
+      return NextResponse.json({ error: "Missing required fields: amountBDT, exchangeRate" }, { status: 400 });
     }
 
     // Fetch all Co-Founders to notify them functionally
@@ -51,7 +52,6 @@ export async function POST(req: Request) {
     const expense = await Expense.create({
       category,
       amountBDT,
-      amountUSD,
       exchangeRate,
       description,
       vendor,
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
     const transaction = await createLedgerEntry({
       type: "EXPENSE",
       direction: "DEBIT",
-      amountUSD,
+      amountUSD: Number((amountBDT / exchangeRate).toFixed(2)),
       amountBDT,
       exchangeRate,
       sourceModel: "Expense",
@@ -98,6 +98,12 @@ export async function POST(req: Request) {
     });
 
     cache.flushAll(); // Purge reports memory cache to force fresh Dashboard calculations
+
+    // Purge Next.js Data Cache for all relevant routes
+    revalidatePath("/dashboard");
+    revalidatePath("/api/reports");
+    revalidatePath("/dashboard/expenses");
+
     return NextResponse.json(expense, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

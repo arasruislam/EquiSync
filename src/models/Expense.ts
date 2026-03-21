@@ -12,7 +12,6 @@ export type ExpenseCategory =
 export interface IExpense extends Document {
   category: ExpenseCategory;
   amountBDT: number;
-  amountUSD: number;
   exchangeRate: number;
   description: string;
   vendor?: string;
@@ -36,7 +35,6 @@ const ExpenseSchema = new Schema<IExpense>(
       required: true,
     },
     amountBDT: { type: Number, required: true, min: 0 },
-    amountUSD: { type: Number, required: true, min: 0 },
     exchangeRate: { type: Number, required: true, min: 0 },
     description: { type: String, required: true, trim: true },
     vendor: { type: String, trim: true },
@@ -49,8 +47,17 @@ const ExpenseSchema = new Schema<IExpense>(
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     transactionRef: { type: Schema.Types.ObjectId, ref: "Transaction" },
   },
-  { timestamps: true }
+  { 
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+  }
 );
+
+// Virtual for Expense in USD
+ExpenseSchema.virtual("amountUSD").get(function() {
+  return Number((this.amountBDT / this.exchangeRate).toFixed(2));
+});
 ExpenseSchema.index({ category: 1 });
 ExpenseSchema.index({ isDeleted: 1, date: -1 });
 

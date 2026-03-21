@@ -26,6 +26,7 @@ import { useSocket } from "@/components/providers/SocketProvider";
 import { fetchLiveExchangeRate } from "@/lib/exchange-rate";
 import { SummaryWidget } from "@/components/dashboard/SummaryWidget";
 import { useGlobalLoading } from "@/components/providers/LoadingProvider";
+import { Modal } from "@/components/ui/Modal";
 
 interface IContribution {
   coOwner: {
@@ -145,6 +146,13 @@ export default function InvestmentsPage() {
     }
   };
 
+  const refreshData = async () => {
+    await Promise.all([
+      fetchInvestments(),
+      fetchReports()
+    ]);
+  };
+
   const handleAddInvestment = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -165,7 +173,6 @@ export default function InvestmentsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amountUSD: totalUSD,
           amountBDT: totalBDT,
           exchangeRate: rate,
           note,
@@ -177,7 +184,7 @@ export default function InvestmentsPage() {
         setShowAddForm(false);
         setNote("");
         setAmountBDT("");
-        fetchInvestments();
+        refreshData();
       } else {
         const err = await res.json();
         alert(err.error || "Failed to add investment");
@@ -228,7 +235,6 @@ export default function InvestmentsPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amountUSD: totalUSD,
           amountBDT: totalBDT,
           exchangeRate: rate,
           note,
@@ -238,7 +244,7 @@ export default function InvestmentsPage() {
 
       if (res.ok) {
         closeEditForm();
-        fetchInvestments();
+        refreshData();
       } else {
         const err = await res.json();
         alert(err.error || "Failed to update investment");
@@ -263,7 +269,7 @@ export default function InvestmentsPage() {
       });
 
       if (res.ok) {
-        fetchInvestments(); // Refresh table
+        refreshData(); // Refresh table and global reports instantly
       } else {
         const err = await res.json();
         alert(err.error || "Failed to update status");
@@ -281,7 +287,7 @@ export default function InvestmentsPage() {
       const res = await fetch(`/api/investments/${itemToDelete}`, { method: "DELETE" });
       if (res.ok) {
         setItemToDelete(null);
-        fetchInvestments();
+        refreshData();
       } else {
         const err = await res.json();
         alert(err.error || "Failed to delete investment");
@@ -293,7 +299,18 @@ export default function InvestmentsPage() {
     }
   };
 
-  const totalUSD = investments.reduce((sum, inv) => sum + inv.amountUSD, 0);
+  const totalBDT = investments.reduce((sum, inv) => sum + (inv.amountBDT || 0), 0);
+  const totalUSD = totalBDT / (parseFloat(exchangeRate) || 120);
+
+  const clearedBDT = investments.reduce((sum, inv) => 
+    sum + inv.contributions.reduce((cSum, c) => c.status === "CLEARED" ? cSum + (c.paidAmountBDT || c.amountBDT || 0) : cSum, 0)
+  , 0);
+  const clearedUSD = clearedBDT / (parseFloat(exchangeRate) || 120);
+
+  const pendingBDT = investments.reduce((sum, inv) => 
+    sum + inv.contributions.reduce((cSum, c) => c.status === "PENDING" ? cSum + ((c.amountBDT || 0) - (c.paidAmountBDT || 0)) : cSum, 0)
+  , 0);
+  const pendingUSD = pendingBDT / (parseFloat(exchangeRate) || 120);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -399,33 +416,29 @@ export default function InvestmentsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <SummaryWidget 
           label="Total Company Capital"
-          value={totalUSD}
+          amountBDT={totalBDT}
+          amountUSD={totalUSD}
           icon={Wallet}
           themeColor="blue"
           description="Active Vault Balance"
-          exchangeRate={parseFloat(exchangeRate) || 120}
         />
         
         <SummaryWidget 
           label="Cleared Funds (Received)"
-          value={investments.reduce((sum, inv) => 
-            sum + inv.contributions.reduce((cSum, c) => c.status === "CLEARED" ? cSum + c.amountUSD : cSum, 0)
-          , 0)}
+          amountBDT={clearedBDT}
+          amountUSD={clearedUSD}
           icon={TrendingUp}
           themeColor="emerald"
           description="Actual paid capital"
-          exchangeRate={parseFloat(exchangeRate) || 120}
         />
         
         <SummaryWidget 
           label="Pending Approvals (Owed)"
-          value={investments.reduce((sum, inv) => 
-            sum + inv.contributions.reduce((cSum, c) => c.status === "PENDING" ? cSum + c.amountUSD : cSum, 0)
-          , 0)}
+          amountBDT={pendingBDT}
+          amountUSD={pendingUSD}
           icon={Clock}
           themeColor="amber"
           description="Awaiting founder transfer"
-          exchangeRate={parseFloat(exchangeRate) || 120}
         />
       </div>
 
@@ -637,229 +650,266 @@ export default function InvestmentsPage() {
       </div>
 
 
-      {/* Add Investment Modal Overlay */}
-      {showAddForm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-lg bg-[#141414] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-primary/10 to-transparent">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Plus className="w-5 h-5 text-primary" /> Record New Investment
-              </h2>
-              <button 
-                onClick={() => setShowAddForm(false)}
-                className="text-gray-500 hover:text-white transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-            
-            <form onSubmit={handleAddInvestment} className="p-6 space-y-5">
+      <Modal isOpen={showAddForm} onClose={() => setShowAddForm(false)} className="max-w-3xl">
+        {/* Header - Sticky */}
+        <div className="p-10 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-primary/20 to-transparent shrink-0">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <Plus className="w-5 h-5 text-primary" /> Record New Investment
+          </h2>
+          <button 
+            onClick={() => setShowAddForm(false)}
+            className="text-gray-500 hover:text-white transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        <form onSubmit={handleAddInvestment} className="flex flex-col flex-1 overflow-hidden">
+          {/* Scrollable Form Body */}
+          <div className="flex-1 overflow-y-auto p-10 space-y-8 scrollbar-thin scrollbar-track-white/5 scrollbar-thumb-white/10">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center justify-between">
-                  <span>Total Investment Amount (BDT)</span>
-                  {amountBDT && exchangeRate && (
-                    <span className="text-primary opacity-80 font-mono bg-[#141414] px-2 py-0.5 rounded border border-white/5">
-                      ≈ ${(parseFloat(amountBDT) / parseFloat(exchangeRate)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD
-                    </span>
-                  )}
-                </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-lg">৳</span>
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">Total Investment (BDT)</label>
+                <div className="relative h-14 group">
+                  <div className="absolute left-5 inset-y-0 flex items-center pointer-events-none">
+                    <span className="text-gray-500 font-bold text-xl group-focus-within:text-primary transition-colors">৳</span>
+                  </div>
                   <input 
                     type="number" 
                     required 
                     value={amountBDT}
                     onChange={(e) => setAmountBDT(e.target.value)}
                     placeholder="e.g. 360000"
-                    className="w-full bg-[#1c1c1c] border border-white/5 rounded-xl py-3 pl-12 pr-4 text-white outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all text-lg font-mono"
+                    className="w-full h-full bg-[#111111] border border-white/5 rounded-2xl pl-14 pr-6 text-white outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all text-lg font-mono placeholder:text-gray-800"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Exchange Rate (1$ = ?)</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">USD Equivalent (Read-Only)</label>
+                <div className="relative h-14">
+                  <div className="absolute left-5 inset-y-0 flex items-center pointer-events-none">
+                    <span className="text-primary/40 font-bold text-xl">$</span>
+                  </div>
+                  <input 
+                    type="text" 
+                    readOnly
+                    value={amountBDT && exchangeRate ? (parseFloat(amountBDT) / parseFloat(exchangeRate)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "0.00"}
+                    className="w-full h-full bg-[#111111]/50 border border-white/5 rounded-2xl pl-14 pr-6 text-primary/60 outline-none font-mono text-lg cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">Exchange Rate (1$ = ?)</label>
+                <div className="relative h-14 group">
+                  <div className="absolute left-5 inset-y-0 flex items-center pointer-events-none">
+                    <span className="text-gray-500 font-bold text-lg group-focus-within:text-primary transition-colors">৳</span>
+                  </div>
                   <input 
                     type="number" 
                     required 
                     value={exchangeRate}
                     onChange={(e) => setExchangeRate(e.target.value)}
-                    placeholder="120"
-                    className="w-full bg-[#1c1c1c] border border-white/5 rounded-xl py-3 px-4 text-white outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all"
+                    placeholder=" e.g. 120"
+                    className="w-full h-full bg-[#111111] border border-white/5 rounded-2xl pl-14 pr-6 text-white outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all font-mono"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Date</label>
-                <div className="relative group">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-primary transition-colors" />
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">Effective Date</label>
+                <div className="relative h-14 group">
+                  <div className="absolute left-5 inset-y-0 flex items-center pointer-events-none">
+                    <Calendar className="w-5 h-5 text-gray-500 group-focus-within:text-primary transition-colors" />
+                  </div>
                   <input 
                     type="date" 
                     required 
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full bg-[#1c1c1c] border border-white/5 rounded-xl py-3 pl-10 pr-4 text-white outline-none focus:border-primary/50 transition-all [color-scheme:dark]"
+                    className="w-full h-full bg-[#111111] border border-white/5 rounded-2xl pl-14 pr-6 text-white outline-none focus:border-primary/50 transition-all [color-scheme:dark] uppercase tracking-widest text-xs font-bold"
                   />
                 </div>
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Note / Reference</label>
-                <textarea 
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="e.g. Initial cloud server setup capital or Marketing budget"
-                  rows={3}
-                  className="w-full bg-[#1c1c1c] border border-white/5 rounded-xl py-3 px-4 text-white outline-none focus:border-primary/50 transition-all resize-none"
-                />
-              </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">Note / Reference (Mandatory Trace)</label>
+              <textarea 
+                value={note}
+                required
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="e.g. Initial cloud server setup capital or marketing budget for Q1"
+                rows={2}
+                className="w-full bg-[#111111] border border-white/5 rounded-2xl py-5 px-6 text-white outline-none focus:border-primary/50 transition-all resize-none text-sm placeholder:text-gray-700 font-medium"
+              />
+            </div>
 
-              <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 flex gap-3">
-                <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                <p className="text-xs text-gray-400 leading-relaxed">
-                  This transaction will be recorded in the central ledger under <span className="text-white font-medium">CREDIT (Investment)</span>. 
-                  It will record a total required company investment of <span className="text-primary font-bold">
-                    {parseFloat(amountBDT || "0").toLocaleString()} BDT
-                  </span> resulting in 3 equal <span className="text-white font-medium">Pending</span> shares of <span className="text-primary font-bold">{(parseFloat(amountBDT || "0") / 3).toLocaleString(undefined, {maximumFractionDigits: 2})} BDT</span> for each Co-Founder.
-                </p>
+            <div className="bg-primary/5 border border-primary/20 rounded-3xl p-6 flex gap-5">
+              <div className="w-10 h-10 rounded-2xl bg-primary/20 flex items-center justify-center shrink-0">
+                <Info className="w-5 h-5 text-primary" />
               </div>
-
-              <div className="flex gap-3 pt-2">
-                <button 
-                  type="button"
-                  onClick={() => setShowAddForm(false)}
-                  className="flex-1 py-3 px-4 bg-[#1c1c1c] hover:bg-[#252525] border border-white/5 rounded-xl text-sm font-semibold text-gray-300 transition-all"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-[2] py-3 px-4 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {isSubmitting ? "Processing..." : "Confirm Investment"}
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </form>
+              <p className="text-xs text-gray-400 leading-relaxed font-bold">
+                This transaction will be recorded in the central ledger under <span className="text-white font-black tracking-widest uppercase bg-white/5 px-2 py-0.5 rounded ml-1">CREDIT (Investment)</span>. 
+                It will record a total company capital requirement of <span className="text-primary font-black uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded ml-1">
+                  {parseFloat(amountBDT || "0").toLocaleString()} BDT
+                </span> (~ ${amountBDT && exchangeRate ? (parseFloat(amountBDT) / parseFloat(exchangeRate)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "0.00"} USD), establishing 3 equal <span className="text-white font-bold uppercase tracking-[0.2em] ml-1">Pending</span> dues of <span className="text-primary font-black uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded ml-1">{(parseFloat(amountBDT || "0") / 3).toLocaleString(undefined, {maximumFractionDigits: 2})} BDT</span> per Co-Founder.
+              </p>
+            </div>
           </div>
-        </div>
-      )}
+
+          {/* Footer - Sticky */}
+          <div className="p-10 border-t border-white/5 flex gap-6 shrink-0 bg-[#0a0a0a]">
+            <button 
+              type="button"
+              onClick={() => setShowAddForm(false)}
+              className="flex-1 h-14 bg-[#111111] hover:bg-[#1a1a1a] border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 hover:text-white transition-all shadow-xl"
+            >
+              Terminate
+            </button>
+            <button 
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-[2] h-14 bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-[0.3em] text-[10px] rounded-2xl shadow-2xl shadow-primary/30 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
+            >
+              {isSubmitting ? "Broadcasting..." : "Establish Investment"}
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Edit Investment Modal Overlay */}
-      {showEditForm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-lg bg-[#141414] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-blue-500/10 to-transparent">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Edit2 className="w-5 h-5 text-blue-500" /> Edit Record & Recalculate
-              </h2>
-              <button 
-                onClick={closeEditForm}
-                className="text-gray-500 hover:text-white transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-            
-            <form onSubmit={handleEditInvestment} className="p-6 space-y-5">
-              <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-lg mb-4">
-                <p className="text-xs text-blue-400 leading-relaxed">
-                  <span className="font-bold">Recalculation Notice:</span> Upward amount adjustments will seamlessly distribute the delta into "Pending" dues for Co-Founders, locking previously "Cleared" funds.
+      <Modal isOpen={showEditForm} onClose={closeEditForm} className="max-w-3xl">
+        {/* Header - Sticky */}
+        <div className="p-10 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-blue-500/20 to-transparent shrink-0">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <Edit2 className="w-5 h-5 text-blue-500" /> Edit Record & Recalculate
+          </h2>
+          <button 
+            onClick={closeEditForm}
+            className="text-gray-500 hover:text-white transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        <form onSubmit={handleEditInvestment} className="flex flex-col flex-1 overflow-hidden">
+          {/* Scrollable Form Body */}
+          <div className="flex-1 overflow-y-auto p-10 space-y-8 scrollbar-thin scrollbar-track-white/5 scrollbar-thumb-white/10">
+            <div className="bg-blue-500/5 border border-blue-500/20 rounded-[2.5rem] p-8 flex gap-6">
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/20 flex items-center justify-center shrink-0">
+                <TrendingUp className="w-6 h-6 text-blue-500" />
+              </div>
+              <div>
+                <p className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em] mb-1">Recalculation Notice</p>
+                <p className="text-xs text-gray-400 leading-relaxed font-bold">
+                  Modifying this entry will trigger a system-wide recalculation of the co-owner dues. An upward adjustment will increase the <span className="text-blue-400 font-bold bg-blue-400/10 px-2 py-0.5 rounded ml-1">Pending Contributions</span> for all shareholders.
                 </p>
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center justify-between">
-                  <span>Total Investment Amount (BDT)</span>
-                  {amountBDT && exchangeRate && (
-                    <span className="text-primary opacity-80 font-mono bg-[#141414] px-2 py-0.5 rounded border border-white/5">
-                      ≈ ${(parseFloat(amountBDT) / parseFloat(exchangeRate)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD
-                    </span>
-                  )}
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="text-gray-400 font-mono">৳</span>
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">Total Investment (BDT)</label>
+                <div className="relative h-14 group">
+                  <div className="absolute left-5 inset-y-0 flex items-center pointer-events-none">
+                    <span className="text-gray-500 font-bold text-xl group-focus-within:text-blue-500 transition-colors">৳</span>
                   </div>
-                  <input
-                    type="number"
+                  <input 
+                    type="number" 
                     step="0.01"
-                    required
+                    required 
                     value={amountBDT}
                     onChange={(e) => setAmountBDT(e.target.value)}
-                    className="w-full pl-8 pr-4 py-3 bg-black/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary text-white transition-all font-mono text-center tracking-wider"
-                    placeholder="Enter total BDT..."
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Exchange Rate (1$ = ?)
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-400 font-mono">৳</span>
-                    </div>
-                    <input
-                      type="number"
-                      step="0.01"
-                      required
-                      value={exchangeRate}
-                      onChange={(e) => setExchangeRate(e.target.value)}
-                      className="w-full pl-8 pr-4 py-3 bg-black/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary text-white transition-all font-mono text-center"
-                      placeholder="e.g. 120"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Date</label>
-                  <input
-                    type="date"
-                    required
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary text-white transition-all text-center uppercase tracking-wider text-sm"
-                    style={{ colorScheme: "dark" }}
+                    className="w-full h-full bg-[#111111] border border-white/5 rounded-2xl pl-14 pr-6 text-white outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all text-lg font-mono placeholder:text-gray-800"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Note / Source (Optional)</label>
-                <input
-                  type="text"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-xl focus:ring-2 focus:ring-primary/50 focus:border-primary text-white transition-all text-center"
-                  placeholder="e.g., Bank Transfer, Wise..."
-                />
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">USD Equivalent (Read-Only)</label>
+                <div className="relative h-14">
+                  <div className="absolute left-5 inset-y-0 flex items-center pointer-events-none">
+                    <span className="text-blue-500/40 font-bold text-xl">$</span>
+                  </div>
+                  <input 
+                    type="text" 
+                    readOnly
+                    value={amountBDT && exchangeRate ? (parseFloat(amountBDT) / parseFloat(exchangeRate)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "0.00"}
+                    className="w-full h-full bg-[#111111]/50 border border-white/5 rounded-2xl pl-14 pr-6 text-blue-500/60 outline-none font-mono text-lg cursor-not-allowed"
+                  />
+                </div>
               </div>
 
-              <div className="pt-4 flex gap-3">
-                <button
-                  type="button"
-                  onClick={closeEditForm}
-                  className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-all font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all font-medium flex items-center justify-center gap-2 group disabled:opacity-50"
-                >
-                  <Wallet className="w-4 h-4 transition-transform group-hover:scale-110" />
-                  {isSubmitting ? "Updating..." : "Update Details"}
-                </button>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">Exchange Rate (1$ = ?)</label>
+                <div className="relative h-14 group">
+                  <div className="absolute left-5 inset-y-0 flex items-center pointer-events-none">
+                    <span className="text-gray-500 font-bold text-lg group-focus-within:text-blue-500 transition-colors">৳</span>
+                  </div>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    required 
+                    value={exchangeRate}
+                    onChange={(e) => setExchangeRate(e.target.value)}
+                    className="w-full h-full bg-[#111111] border border-white/5 rounded-2xl pl-14 pr-6 text-white outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all font-mono"
+                  />
+                </div>
               </div>
-            </form>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">Date of Entry</label>
+                <div className="relative h-14 group">
+                  <div className="absolute left-5 inset-y-0 flex items-center pointer-events-none">
+                    <Calendar className="w-5 h-5 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
+                  </div>
+                  <input 
+                    type="date" 
+                    required 
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="w-full h-full bg-[#111111] border border-white/5 rounded-2xl pl-14 pr-6 text-white outline-none focus:border-blue-500/50 transition-all [color-scheme:dark] uppercase tracking-widest text-xs font-bold"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">Note / Source (Mandatory Trace)</label>
+              <textarea 
+                value={note}
+                required
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="e.g. Rahul Roy Nipon - Private Cloud Server Injection"
+                rows={2}
+                className="w-full bg-[#111111] border border-white/5 rounded-2xl py-5 px-6 text-white outline-none focus:border-blue-500/50 transition-all resize-none text-sm placeholder:text-gray-700 font-medium"
+              />
+            </div>
           </div>
-        </div>
-      )}
+
+          {/* Footer - Sticky */}
+          <div className="p-10 border-t border-white/5 flex gap-6 shrink-0 bg-[#0a0a0a]">
+            <button 
+              type="button"
+              onClick={closeEditForm}
+              className="flex-1 h-14 bg-[#111111] hover:bg-[#1a1a1a] border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 hover:text-white transition-all shadow-xl"
+            >
+              Discard
+            </button>
+            <button 
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-[2] h-14 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-[0.3em] text-[10px] rounded-2xl shadow-2xl shadow-blue-500/30 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
+            >
+              {isSubmitting ? "Updating..." : "Update Vault"}
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal 
