@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { ShieldCheck, Search, Filter, ChevronLeft, ChevronRight, RefreshCcw, Download } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { ShieldCheck, Search, Filter, ChevronLeft, ChevronRight, RefreshCcw, Download, Eye, History, User, Clock, ArrowRight, CheckCircle2, AlertCircle } from "lucide-react";
+import { formatDate, cn, getAuditDescription } from "@/lib/utils";
 import { useSocket } from "@/components/providers/SocketProvider";
 import { exportToPDF, exportToCSV } from "@/lib/export-utils";
 import { useGlobalLoading } from "@/components/providers/LoadingProvider";
+import { AuditTraceView } from "@/components/audit/AuditTraceView";
 
 export default function ActivityLedgerPage() {
   const [logs, setLogs] = useState([]);
@@ -17,6 +18,10 @@ export default function ActivityLedgerPage() {
   // Filters
   const [actionType, setActionType] = useState("");
   const [targetModel, setTargetModel] = useState("");
+  
+  // Modal State
+  const [selectedLog, setSelectedLog] = useState<any>(null);
+  const [showModal, setShowModal] = useState(false);
   
   const { socket } = useSocket();
 
@@ -78,8 +83,8 @@ export default function ActivityLedgerPage() {
     const data = logs.map((log: any) => [
       `${formatDate(log.createdAt)} ${new Date(log.createdAt).toLocaleTimeString()}`,
       log.actor?.name || "Unknown",
-      log.action.replace(/_/g, " "),
-      log.targetId
+      (log.action || "SYSTEM_OP").replace(/_/g, " "),
+      log.targetId || "GLOBAL"
     ]);
 
     exportToPDF("System Matrix Audit Log", headers, data, `QuoteX_Audit_${new Date().toISOString().split('T')[0]}.pdf`);
@@ -191,7 +196,7 @@ export default function ActivityLedgerPage() {
                 </tr>
               ) : (
                 logs.map((log: any) => (
-                  <tr key={log._id} className="hover:bg-white/[0.02] transition-colors group">
+                  <tr key={log._id} className="transition-colors group border-b border-white/5 last:border-0">
                     <td className="px-6 py-4 text-center">
                       <div className="text-sm font-medium text-gray-300">{formatDate(log.createdAt)}</div>
                       <div className="text-[10px] text-gray-600 mt-0.5">{new Date(log.createdAt).toLocaleTimeString()}</div>
@@ -214,7 +219,7 @@ export default function ActivityLedgerPage() {
                           </div>
                         )}
                         <div className="flex flex-col items-start translate-x-[-2px]">
-                          <div className="text-sm font-bold text-white group-hover/actor:text-blue-400 transition-colors uppercase tracking-widest leading-tight">
+                          <div className="text-sm font-bold text-white transition-colors uppercase tracking-widest leading-tight">
                             {log.actor?.name?.split(" ")[0]}
                           </div>
                           <div className="text-[9px] text-gray-500 font-extrabold uppercase tracking-tighter">{log.actor?.role?.replace("_", " ")}</div>
@@ -222,18 +227,35 @@ export default function ActivityLedgerPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-tighter border mx-auto inline-block ${getActionColor(log.action)}`}>
-                        {log.action.replace(/_/g, " ")}
+                      <span className={`px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 border border-blue-500/20 text-[9px] font-black uppercase tracking-tighter mx-auto inline-block ${getActionColor(log.action || "SYSTEM_OP")}`}>
+                        {(log.action || "SYSTEM_OP").replace(/_/g, " ")}
                       </span>
-                      <div className="text-[10px] text-gray-600 mt-1 font-mono">{log.targetModel}</div>
+                      <p className="text-[10px] text-gray-500 font-medium leading-relaxed mt-1 max-w-[180px] mx-auto italic">
+                        {getAuditDescription(log.action, log.targetModel)}
+                      </p>
+                      <div className="text-[9px] text-gray-700 mt-1 font-mono uppercase tracking-tighter font-black opacity-50">{log.targetModel}</div>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <div className="text-xs font-mono text-gray-500 truncate max-w-[250px] mx-auto">
-                        ID: {log.targetId}
-                      </div>
-                      <div className="text-[10px] text-gray-600 mt-0.5 flex items-center justify-center gap-2">
-                        {log.newValue && <span className="text-emerald-500/80 font-semibold">+ STATE CAPTURED</span>}
-                        {log.oldValue && <span className="text-amber-500/80 font-semibold">• SNAPSHOT SAVED</span>}
+                      <div className="flex items-center justify-center gap-4">
+                        <div className="text-left">
+                          <div className="text-[10px] font-mono text-gray-400 truncate max-w-[120px]">
+                            ID: {log.targetId?.substring(0, 8) || "GLOBAL"}
+                          </div>
+                          <div className="text-[9px] text-gray-600 mt-0.5 flex items-center gap-2">
+                            {log.newValue && <span className="text-emerald-500/60 font-bold tracking-tighter uppercase whitespace-nowrap">+ UPDATED</span>}
+                            {log.oldValue && <span className="text-amber-500/60 font-bold tracking-tighter uppercase whitespace-nowrap">• SNAPSHOT</span>}
+                          </div>
+                        </div>
+                        
+                        <button 
+                          onClick={() => {
+                            setSelectedLog(log);
+                            setShowModal(true);
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-xl text-[10px] font-black text-blue-500 transition-all shadow-lg uppercase tracking-widest whitespace-nowrap active:scale-95"
+                        >
+                          <Eye className="w-4 h-4" /> View Details
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -265,6 +287,88 @@ export default function ActivityLedgerPage() {
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
+        </div>
+
+        <AuditDetailModal 
+          log={selectedLog}
+          isOpen={showModal}
+          onClose={() => {
+            setShowModal(false);
+            setSelectedLog(null);
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// --- Helper Components & Logic for Human-Readable Audit ---
+
+function AuditDetailModal({ log, isOpen, onClose }: { log: any; isOpen: boolean; onClose: () => void }) {
+  if (!isOpen || !log) return null;
+
+  // Extract logic moved to component
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 pb-20 sm:pb-6 overflow-hidden">
+      <div className="fixed inset-0 w-screen h-screen bg-black/80 backdrop-blur-md animate-in fade-in duration-300" onClick={onClose} />
+      
+      <div className="relative w-full max-w-4xl bg-[#0a0a0a] border border-white/10 rounded-[32px] shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col max-h-[85vh]">
+        {/* Header */}
+        <div className="p-6 border-b border-white/5 bg-white/[0.02] flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20">
+              <History className="w-6 h-6 text-blue-500" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white tracking-tight">Audit Mutation Details</h2>
+              <p className="text-gray-500 text-[11px] font-medium leading-relaxed max-w-md mt-0.5">
+                {getAuditDescription(log.action, log.targetModel)}
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 border border-blue-500/20 text-[9px] font-black uppercase tracking-tighter">
+                  {(log.action || "SYSTEM_OP").replace(/_/g, " ")}
+                </span>
+                <span className="text-[10px] text-gray-500 font-mono">ID: {log.targetId}</span>
+              </div>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl text-gray-500 hover:text-white transition-all">
+            <RefreshCcw className="w-5 h-5 rotate-45" />
+          </button>
+        </div>
+
+        {/* Audit Metadata Card */}
+        <div className="grid grid-cols-2 gap-px bg-white/5 border-b border-white/5">
+          <div className="p-4 flex items-center gap-3 bg-[#0a0a0a]">
+            <User className="w-4 h-4 text-gray-500" />
+            <div>
+              <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Modified By</p>
+              <p className="text-sm font-bold text-gray-300">{log.actor?.name || "System"}</p>
+            </div>
+          </div>
+          <div className="p-4 flex items-center gap-3 bg-[#0a0a0a]">
+            <Clock className="w-4 h-4 text-gray-500" />
+            <div>
+              <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Timestamp</p>
+              <p className="text-sm font-bold text-gray-300">{new Date(log.createdAt).toLocaleString()}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* High-Tech Diff Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <AuditTraceView oldValue={log.oldValue} newValue={log.newValue} />
+        </div>
+
+        {/* Footer */}
+        <div className="p-6 bg-white/[0.02] border-t border-white/5 flex justify-end">
+          <button 
+            onClick={onClose}
+            className="px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-all active:scale-95"
+          >
+            Acknowledge Trace
+          </button>
         </div>
       </div>
     </div>
