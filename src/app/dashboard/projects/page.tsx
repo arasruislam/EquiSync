@@ -18,9 +18,10 @@ import {
   AlertCircle,
   Tag
 } from "lucide-react";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import Link from "next/link";
 import { useGlobalLoading } from "@/components/providers/LoadingProvider";
+import { Modal } from "@/components/ui/Modal";
 
 interface Project {
   _id: string;
@@ -127,11 +128,11 @@ export default function ProjectsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "ACTIVE": return "text-blue-500 bg-blue-500/10";
-      case "COMPLETED": return "text-emerald-500 bg-emerald-500/10";
-      case "ON_HOLD": return "text-amber-500 bg-amber-500/10";
-      case "CANCELLED": return "text-rose-500 bg-rose-500/10";
-      default: return "text-gray-500 bg-gray-500/10";
+      case "ACTIVE": return "text-blue-600 dark:text-blue-500 bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20";
+      case "COMPLETED": return "text-emerald-600 dark:text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20";
+      case "ON_HOLD": return "text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20";
+      case "CANCELLED": return "text-rose-600 dark:text-rose-500 bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20";
+      default: return "text-slate-400 dark:text-gray-500 bg-slate-50 dark:bg-gray-500/10 border-slate-100 dark:border-gray-500/20";
     }
   };
 
@@ -144,8 +145,8 @@ export default function ProjectsPage() {
             <Briefcase className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Project Pipeline</h1>
-            <p className="text-gray-500 text-sm">Manage client mandates, team assignments, and revenue targets.</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white transition-colors duration-300">Project Pipeline</h1>
+            <p className="text-slate-400 dark:text-gray-500 text-sm transition-colors duration-300">Manage client mandates, team assignments, and revenue targets.</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -165,57 +166,57 @@ export default function ProjectsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading ? (
           [1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-64 rounded-2xl bg-[#0f0f0f] border border-white/5 animate-pulse" />
+            <div key={i} className="h-64 rounded-3xl bg-white dark:bg-[#0f0f0f] border border-slate-100 dark:border-white/5 animate-pulse shadow-sm" />
           ))
         ) : projects.length === 0 ? (
-          <div className="col-span-full py-20 text-center bg-[#0f0f0f] border border-white/5 border-dashed rounded-3xl">
-            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
-              <Briefcase className="w-8 h-8 text-gray-600" />
+          <div className="col-span-full py-20 text-center bg-white dark:bg-[#0f0f0f] border border-slate-100 dark:border-white/5 border-dashed rounded-3xl shadow-sm transition-all duration-300">
+            <div className="w-16 h-16 rounded-full bg-slate-50 dark:bg-white/5 flex items-center justify-center mx-auto mb-4 transition-colors">
+              <Briefcase className="w-8 h-8 text-slate-300 dark:text-gray-600 transition-colors" />
             </div>
-            <h3 className="text-lg font-bold text-white">No projects found</h3>
-            <p className="text-gray-500 mt-1">Start by creating your first project pipeline.</p>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white transition-colors">No projects found</h3>
+            <p className="text-slate-400 dark:text-gray-500 mt-1 transition-colors">Start by creating your first project pipeline.</p>
           </div>
         ) : (
           projects.map((project) => (
-            <div key={project._id} className="group bg-[#050B18] border border-white/5 rounded-3xl p-8 hover:border-blue-500/30 transition-all relative overflow-hidden flex flex-col shadow-xl shadow-blue-900/5">
+            <div key={project._id} className="group bg-white dark:bg-[#050B18] border border-slate-100 dark:border-white/5 rounded-3xl p-8 hover:border-blue-500/30 transition-all relative overflow-hidden flex flex-col shadow-xl dark:shadow-blue-900/5 duration-300">
               <div className="flex justify-center mb-4">
-                <div className={cn("px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-current opacity-80", getStatusColor(project.status))}>
+                <div className={cn("px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all", getStatusColor(project.status))}>
                    {project.status === "ACTIVE" ? "Operational" : project.status}
                 </div>
               </div>
 
               <div className="flex-1 text-center">
                 <Link href={`/dashboard/projects/${project._id}`} className="block group/link">
-                  <h3 className="text-xl font-black text-white group-hover/link:text-blue-400 transition-colors uppercase tracking-tight">{project.title}</h3>
-                  <p className="text-xs text-gray-500 mt-2 flex items-center justify-center gap-2 font-bold uppercase tracking-wider">
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white group-hover/link:text-blue-600 dark:group-hover/link:text-blue-400 transition-colors uppercase tracking-tight">{project.title}</h3>
+                  <p className="text-xs text-slate-400 dark:text-gray-500 mt-2 flex items-center justify-center gap-2 font-bold uppercase tracking-wider transition-colors">
                     <Layers className="w-3.5 h-3.5 text-blue-500" />
                     {project.clientName || "Direct Client"}
                   </p>
                 </Link>
 
-                <div className="mt-8 space-y-4 bg-black/30 p-4 rounded-2xl border border-white/5">
-                  <div className="flex flex-col items-center justify-center gap-1 text-xs">
-                    <span className="text-gray-500 font-bold uppercase tracking-widest flex items-center gap-2">
-                       <DollarSign className="w-3 h-3 text-blue-500" /> Valuation
+                <div className="mt-8 space-y-4 bg-slate-50 dark:bg-black/30 p-4 rounded-2xl border border-slate-100 dark:border-white/5 transition-colors">
+                  <div className="flex flex-col items-center justify-center gap-1 text-xs transition-colors">
+                    <span className="text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest flex items-center gap-2">
+                       <DollarSign className="w-3 h-3 text-blue-600 dark:text-blue-500" /> Valuation
                     </span>
-                    <span className="text-white font-black">{formatCurrency(project.totalValueUSD)}</span>
+                    <span className="text-slate-900 dark:text-white font-black transition-colors">{formatCurrency(project.totalValueUSD)}</span>
                   </div>
-                  <div className="flex flex-col items-center justify-center gap-1 text-xs">
-                    <span className="text-gray-500 font-bold uppercase tracking-widest flex items-center gap-2">
-                       <Clock className="w-3 h-3 text-blue-500" /> Timeline
+                  <div className="flex flex-col items-center justify-center gap-1 text-xs transition-colors">
+                    <span className="text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest flex items-center gap-2">
+                       <Clock className="w-3 h-3 text-blue-600 dark:text-blue-500" /> Timeline
                     </span>
-                    <span className="text-gray-400 font-bold">{formatDate(project.startDate)}</span>
+                    <span className="text-slate-600 dark:text-gray-400 font-bold transition-colors">{formatDate(project.startDate)}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6 pt-6 border-t border-white/5 flex items-center justify-between">
+              <div className="mt-6 pt-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-between transition-colors">
                 <div className="flex -space-x-2">
                   {project.assignedTo.slice(0, 3).map((user) => (
                     <div 
                       key={user._id} 
                       title={user.name}
-                      className="w-8 h-8 rounded-full border-2 border-[#050B18] overflow-hidden bg-[#1c1c1c] flex items-center justify-center shrink-0 shadow-lg"
+                      className="w-8 h-8 rounded-full border-2 border-white dark:border-[#050B18] overflow-hidden bg-slate-100 dark:bg-[#1c1c1c] flex items-center justify-center shrink-0 shadow-sm transition-all"
                     >
                       {user.image ? (
                         <Image 
@@ -226,19 +227,19 @@ export default function ProjectsPage() {
                           className="object-cover w-full h-full"
                         />
                       ) : (
-                        <span className="text-[10px] font-bold text-gray-400">{user.name.charAt(0)}</span>
+                        <span className="text-[10px] font-bold text-slate-400 transition-colors uppercase">{user.name.charAt(0)}</span>
                       )}
                     </div>
                   ))}
                   {project.assignedTo.length > 3 && (
-                    <div className="w-8 h-8 rounded-full border-2 border-[#0f0f0f] bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                    <div className="w-8 h-8 rounded-full border-2 border-white dark:border-[#0f0f0f] bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary shadow-sm transition-all">
                       +{project.assignedTo.length - 3}
                     </div>
                   )}
                 </div>
                 <Link 
                   href={`/dashboard/projects/${project._id}`}
-                  className="p-2 rounded-xl bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all"
+                  className="p-2 rounded-xl bg-slate-50 dark:bg-white/5 text-slate-400 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all shadow-sm"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </Link>
@@ -249,143 +250,137 @@ export default function ProjectsPage() {
       </div>
 
       {/* Add Project Modal */}
-      {showAddForm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-2xl bg-[#141414] border border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-400">
-            <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-primary/10 to-transparent">
-              <div>
-                <h2 className="text-2xl font-bold text-white tracking-tight">Create New Project</h2>
-                <p className="text-gray-500 text-sm mt-1">Define scope, value, and assemble your team.</p>
-              </div>
-              <button onClick={() => setShowAddForm(false)} className="text-gray-500 hover:text-white transition-colors bg-white/5 p-2 rounded-full">
-                ✕
-              </button>
+      <Modal isOpen={showAddForm} onClose={() => setShowAddForm(false)} className="max-w-2xl">
+        <div className="bg-white dark:bg-[#141414] rounded-3xl overflow-hidden transition-all duration-300">
+          <div className="p-8 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-gradient-to-r from-primary/10 to-transparent">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight transition-colors">Create New Project</h2>
+              <p className="text-slate-400 dark:text-gray-500 text-sm mt-1 transition-colors">Define scope, value, and assemble your team.</p>
             </div>
-            
-            <form onSubmit={handleCreateProject} className="p-8 space-y-6">
+            <button onClick={() => setShowAddForm(false)} className="text-slate-400 hover:text-slate-900 dark:text-gray-500 dark:hover:text-white transition-colors bg-slate-100 dark:bg-white/5 p-2 rounded-full shadow-sm">
+              ✕
+            </button>
+          </div>
+          
+          <form onSubmit={handleCreateProject} className="p-8 space-y-6">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest pl-1 transition-colors">Project Title</label>
+              <input 
+                type="text" 
+                required 
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Next.js SaaS Platform Development"
+                className="w-full bg-slate-50 dark:bg-[#1c1c1c] border border-slate-200 dark:border-white/5 rounded-2xl py-3 px-4 text-slate-900 dark:text-white outline-none focus:border-primary/50 text-lg font-medium shadow-sm transition-all"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">Project Title</label>
+                <label className="text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest pl-1 transition-colors">Client Name</label>
                 <input 
                   type="text" 
-                  required 
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Next.js SaaS Platform Development"
-                  className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-primary/50 text-lg font-medium"
+                  value={clientName}
+                  onChange={(e) => setClientName(e.target.value)}
+                  placeholder="Company or Individual"
+                  className="w-full bg-slate-50 dark:bg-[#1c1c1c] border border-slate-200 dark:border-white/5 rounded-2xl py-3 px-4 text-slate-900 dark:text-white outline-none focus:border-primary/50 shadow-sm transition-all"
                 />
               </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">Client Name</label>
-                  <input 
-                    type="text" 
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    placeholder="Company or Individual"
-                    className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-primary/50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">Start Date</label>
-                  <input 
-                    type="date" 
-                    required 
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-primary/50 [color-scheme:dark]"
-                  />
-                </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest pl-1 transition-colors">Start Date</label>
+                <input 
+                  type="date" 
+                  required 
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-[#1c1c1c] border border-slate-200 dark:border-white/5 rounded-2xl py-3 px-4 text-slate-900 dark:text-white outline-none focus:border-primary/50 shadow-sm transition-all"
+                />
               </div>
+            </div>
 
-              <div className="grid grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">Target USD</label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                    <input 
-                      type="number" 
-                      required 
-                      value={totalValueUSD}
-                      onChange={(e) => setTotalValueUSD(e.target.value)}
-                      placeholder="0.00"
-                      className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 pl-10 text-white outline-none focus:border-primary/50 font-bold"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">Rate</label>
+            <div className="grid grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest pl-1 transition-colors">Target USD</label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-gray-500 transition-colors" />
                   <input 
                     type="number" 
                     required 
-                    value={exchangeRate}
-                    onChange={(e) => setExchangeRate(e.target.value)}
-                    className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-primary/50"
+                    value={totalValueUSD}
+                    onChange={(e) => setTotalValueUSD(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full bg-slate-50 dark:bg-[#1c1c1c] border border-slate-200 dark:border-white/5 rounded-2xl py-3 pl-10 text-slate-900 dark:text-white outline-none focus:border-primary/50 font-bold shadow-sm transition-all"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">Total BDT</label>
-                  <div className="w-full bg-[#0a0a0a] border border-white/5 rounded-2xl py-3 px-4 text-gray-500 font-bold">
-                    {(parseFloat(totalValueUSD || "0") * parseFloat(exchangeRate || "0")).toLocaleString()}
-                  </div>
-                </div>
               </div>
-
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">Team Assignments</label>
-                <div className="p-3 bg-[#1c1c1c] border border-white/5 rounded-2xl max-h-40 overflow-y-auto space-y-2 custom-scrollbar">
-                  {users.map((user) => (
-                    <label key={user._id} className="flex items-center gap-3 p-2 hover:bg-white/5 rounded-xl cursor-pointer transition-colors group">
-                      <input 
-                        type="checkbox" 
-                        checked={assignedTo.includes(user._id)}
-                        onChange={(e) => {
-                          if (e.target.checked) setAssignedTo([...assignedTo, user._id]);
-                          else setAssignedTo(assignedTo.filter(id => id !== user._id));
-                        }}
-                        className="w-4 h-4 rounded border-white/10 bg-black text-primary accent-primary"
-                      />
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10 shrink-0">
-                          {user.image ? (
-                            <Image 
-                              src={user.image} 
-                              alt={user.name} 
-                              width={32} 
-                              height={32} 
-                              className="object-cover w-full h-full"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-primary/40 to-blue-600/40 flex items-center justify-center text-[10px] font-bold text-white">
-                              {user.name.charAt(0)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-semibold text-white group-hover:text-primary transition-colors">{user.name}</span>
-                          <span className="text-[10px] text-gray-500 uppercase font-bold tracking-tighter">{user.role}</span>
-                        </div>
-                      </div>
-                    </label>
-                  ))}
+                <label className="text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest pl-1 transition-colors">Rate</label>
+                <input 
+                  type="number" 
+                  required 
+                  value={exchangeRate}
+                  onChange={(e) => setExchangeRate(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-[#1c1c1c] border border-slate-200 dark:border-white/5 rounded-2xl py-3 px-4 text-slate-900 dark:text-white outline-none focus:border-primary/50 shadow-sm transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest pl-1 transition-colors">Total BDT</label>
+                <div className="w-full bg-slate-100 dark:bg-[#0a0a0a] border border-slate-200 dark:border-white/5 rounded-2xl py-3 px-4 text-slate-500 dark:text-gray-500 font-bold transition-all shadow-inner">
+                  {(parseFloat(totalValueUSD || "0") * parseFloat(exchangeRate || "0")).toLocaleString()}
                 </div>
               </div>
+            </div>
 
-              <div className="flex gap-4 pt-4">
-                <button type="button" onClick={() => setShowAddForm(false)} className="flex-1 py-4 bg-[#1c1c1c] hover:bg-[#252525] rounded-2xl text-sm font-semibold text-gray-400 transition-all">Cancel</button>
-                <button type="submit" disabled={isSubmitting} className="flex-[2] py-4 bg-primary hover:bg-primary/90 text-white font-bold rounded-2xl shadow-xl shadow-primary/20 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 group transition-all">
-                  {isSubmitting ? "Scaffolding Project..." : "Launch Project"}
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest pl-1 transition-colors">Team Assignments</label>
+              <div className="p-3 bg-slate-50 dark:bg-[#1c1c1c] border border-slate-200 dark:border-white/5 rounded-2xl max-h-40 overflow-y-auto space-y-2 custom-scrollbar transition-all shadow-inner">
+                {users.map((user) => (
+                  <label key={user._id} className="flex items-center gap-3 p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl cursor-pointer transition-colors group">
+                    <input 
+                      type="checkbox" 
+                      checked={assignedTo.includes(user._id)}
+                      onChange={(e) => {
+                        if (e.target.checked) setAssignedTo([...assignedTo, user._id]);
+                        else setAssignedTo(assignedTo.filter(id => id !== user._id));
+                      }}
+                      className="w-4 h-4 rounded border-slate-200 dark:border-white/10 bg-white dark:bg-black text-primary accent-primary shadow-sm transition-all"
+                    />
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 shrink-0 shadow-sm transition-all">
+                        {user.image ? (
+                          <Image 
+                            src={user.image} 
+                            alt={user.name} 
+                            width={32} 
+                            height={32} 
+                            className="object-cover w-full h-full"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-primary/40 to-blue-600/40 flex items-center justify-center text-[10px] font-bold text-white transition-all uppercase">
+                            {user.name.charAt(0)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-primary transition-colors">{user.name}</span>
+                        <span className="text-[10px] text-slate-400 dark:text-gray-500 uppercase font-bold tracking-tighter transition-colors">{user.role}</span>
+                      </div>
+                    </div>
+                  </label>
+                ))}
               </div>
-            </form>
-          </div>
+            </div>
+
+            <div className="flex gap-4 pt-4">
+              <button type="button" onClick={() => setShowAddForm(false)} className="flex-1 py-4 bg-slate-100 dark:bg-[#1c1c1c] hover:bg-slate-200 dark:hover:bg-[#252525] rounded-2xl text-sm font-semibold text-slate-400 dark:text-gray-400 transition-all shadow-sm">Cancel</button>
+              <button type="submit" disabled={isSubmitting} className="flex-[2] py-4 bg-primary hover:bg-primary/90 text-white font-bold rounded-2xl shadow-xl shadow-primary/20 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 group transition-all">
+                {isSubmitting ? "Scaffolding Project..." : "Launch Project"}
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+          </form>
         </div>
-      )}
+      </Modal>
     </div>
   );
-}
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(" ");
 }

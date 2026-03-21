@@ -40,15 +40,15 @@ export const Modal = ({
       {/* Backdrop Overlay - Absolute Full Viewport Coverage */}
       <div 
         className={cn(
-          "fixed inset-0 w-screen h-screen bg-black/60 transition-all duration-300",
-          showBlur && "backdrop-blur-sm"
+          "fixed inset-0 w-screen h-screen bg-black/40 dark:bg-black/60 transition-all duration-300",
+          showBlur && "backdrop-blur-[2px] dark:backdrop-blur-sm"
         )} 
         onClick={onClose}
       />
       
       {/* Modal Content Wrapper */}
       <div className={cn(
-        "relative w-full max-w-4xl bg-[#0a0a0a] border border-white/10 rounded-[32px] shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col max-h-[90vh]",
+        "relative w-full max-w-4xl bg-white dark:bg-[#0a0a0a] border border-gray-100 dark:border-white/10 rounded-[32px] shadow-2xl dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col max-h-[90vh]",
         className
       )}>
         {children}

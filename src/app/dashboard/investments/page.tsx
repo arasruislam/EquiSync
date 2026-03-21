@@ -321,12 +321,12 @@ export default function InvestmentsPage() {
             <Wallet className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Founder Investments</h1>
-            <p className="text-gray-500 text-sm">Track capital injections from Rahul, Ashraful, and Saifur.</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white transition-colors duration-300">Founder Investments</h1>
+            <p className="text-slate-400 dark:text-gray-500 text-sm transition-colors duration-300">Track capital injections from Rahul, Ashraful, and Saifur.</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-[#141414] hover:bg-[#1c1c1c] border border-white/5 rounded-xl text-sm font-medium text-gray-300 transition-all">
+          <button className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-[#141414] hover:bg-slate-200 dark:hover:bg-[#1c1c1c] border border-slate-200 dark:border-white/5 rounded-xl text-sm font-medium text-slate-700 dark:text-gray-300 transition-all">
             <Download className="w-4 h-4" />
             Export CSV
           </button>
@@ -345,23 +345,23 @@ export default function InvestmentsPage() {
       {/* Personalized Metrics Section */}
       {session?.user?.role === "CO_FOUNDER" && reportData?.coFounderStats && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="p-6 bg-gradient-to-br from-blue-600/10 to-blue-900/5 border border-blue-500/20 rounded-2xl relative overflow-hidden group shadow-lg shadow-blue-900/10">
-            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 relative z-10 text-center">Your Total Investment</p>
-            <h3 className="text-2xl font-black text-white relative z-10 text-center">
+          <div className="p-6 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-500/20 rounded-2xl relative overflow-hidden group shadow-sm dark:shadow-blue-900/10 transition-all duration-300">
+            <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1 relative z-10 text-center">Your Total Investment</p>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white relative z-10 text-center">
               {formatCurrency(reportData.coFounderStats.totalInvestedBDT, "BDT")}
             </h3>
-            <div className="text-[10px] text-blue-400/50 mt-2 font-black uppercase tracking-widest relative z-10 flex items-center justify-center gap-2">
+            <div className="text-[10px] text-blue-500 dark:text-blue-400/50 mt-2 font-black uppercase tracking-widest relative z-10 flex items-center justify-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
               Aggregate Cleared
             </div>
           </div>
-          <div className="p-6 bg-gradient-to-br from-blue-400/10 to-indigo-900/5 border border-blue-400/20 rounded-2xl relative overflow-hidden group shadow-lg shadow-indigo-900/10">
-            <p className="text-[10px] font-black text-blue-300 uppercase tracking-widest mb-1 relative z-10 text-center">Your Pending Dues</p>
-            <h3 className="text-2xl font-black text-white relative z-10 text-center">
+          <div className="p-6 bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-blue-400/20 rounded-2xl relative overflow-hidden group shadow-sm dark:shadow-indigo-900/10 transition-all duration-300">
+            <p className="text-[10px] font-black text-indigo-600 dark:text-blue-300 uppercase tracking-widest mb-1 relative z-10 text-center">Your Pending Dues</p>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white relative z-10 text-center">
               {formatCurrency(reportData.coFounderStats.totalPendingDuesBDT, "BDT")}
             </h3>
-            <div className="text-[10px] text-blue-300/50 mt-2 font-black uppercase tracking-widest relative z-10 flex items-center justify-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+            <div className="text-[10px] text-indigo-500 dark:text-blue-300/50 mt-2 font-black uppercase tracking-widest relative z-10 flex items-center justify-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
               Owed to Quotex
             </div>
           </div>
@@ -372,11 +372,11 @@ export default function InvestmentsPage() {
       {["SUPER_ADMIN", "CO_FOUNDER"].includes(session?.user?.role as string) && reportData?.allCoFounderStats && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {reportData.allCoFounderStats.map((founder: any) => (
-            <div key={founder.userId} className="p-5 bg-[#0a0a0a] border border-white/5 rounded-2xl hover:border-blue-500/30 transition-all group/card">
+            <div key={founder.userId} className="p-5 bg-white dark:bg-[#0a0a0a] border border-slate-100 dark:border-white/5 rounded-2xl hover:border-blue-500/30 transition-all group/card shadow-xl dark:shadow-none">
               <div className="flex items-center gap-3 mb-4">
                 <div className="relative shrink-0">
                   {founder.image ? (
-                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-blue-900 shadow-[0_0_15px_rgba(59,130,246,0.1)] group-hover/card:border-blue-500 group-hover/card:shadow-[0_0_20px_rgba(59,130,246,0.2)] transition-all duration-300">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-slate-900 shadow-[0_0_15px_rgba(59,130,246,0.1)] group-hover/card:border-blue-500 group-hover/card:shadow-[0_0_20px_rgba(59,130,246,0.2)] transition-all duration-300">
                       <Image 
                         src={founder.image} 
                         alt={founder.name} 
@@ -390,21 +390,21 @@ export default function InvestmentsPage() {
                       {founder.name[0]}
                     </div>
                   )}
-                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#0a0a0a] rounded-full" />
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-[#0a0a0a] rounded-full" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-sm font-black text-white group-hover/card:text-blue-400 transition-colors uppercase tracking-tight">{founder.name}</span>
-                  <span className="text-[9px] text-gray-600 font-black uppercase tracking-widest">Co-Founder</span>
+                  <span className="text-sm font-black text-slate-900 dark:text-white group-hover/card:text-blue-600 dark:group-hover/card:text-blue-400 transition-colors uppercase tracking-tight">{founder.name}</span>
+                  <span className="text-[9px] text-slate-400 dark:text-gray-600 font-black uppercase tracking-widest">Co-Founder</span>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-2">
                 <div className="flex justify-between items-center text-[10px]">
-                  <span className="text-gray-500 uppercase tracking-wider">Invested</span>
-                  <span className="text-emerald-400 font-bold">{formatCurrency(founder.totalInvestedBDT, "BDT")}</span>
+                  <span className="text-slate-400 dark:text-gray-500 uppercase tracking-wider">Invested</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">{formatCurrency(founder.totalInvestedBDT, "BDT")}</span>
                 </div>
                 <div className="flex justify-between items-center text-[10px]">
-                  <span className="text-gray-500 uppercase tracking-wider">Pending</span>
-                  <span className="text-rose-400 font-bold">{formatCurrency(founder.totalPendingDuesBDT, "BDT")}</span>
+                  <span className="text-slate-400 dark:text-gray-500 uppercase tracking-wider">Pending</span>
+                  <span className="text-rose-600 dark:text-rose-400 font-bold">{formatCurrency(founder.totalPendingDuesBDT, "BDT")}</span>
                 </div>
               </div>
             </div>
@@ -443,15 +443,15 @@ export default function InvestmentsPage() {
       </div>
 
       {/* Investments Table Container */}
-      <div className="bg-[#0f0f0f] border border-white/5 rounded-2xl shadow-sm overflow-visible">
+      <div className="bg-white dark:bg-[#0f0f0f] border border-slate-100 dark:border-white/5 rounded-2xl shadow-xl dark:shadow-sm overflow-visible">
         {/* Simplified Filter Bar */}
-        <div className="p-4 border-b border-white/5 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="p-4 border-b border-slate-100 dark:border-white/5 flex flex-col sm:flex-row items-center justify-center gap-4">
           <div className="flex items-center gap-3">
             {/* Status Filter */}
             <select 
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-[#141414] border border-white/5 rounded-xl px-4 py-2.5 text-xs font-bold text-gray-400 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all appearance-none cursor-pointer hover:bg-[#1c1c1c] min-w-[150px] text-center uppercase tracking-widest shadow-inner hover:text-white"
+              className="bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-gray-400 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all appearance-none cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1c1c1c] min-w-[150px] text-center uppercase tracking-widest shadow-sm hover:text-slate-900 dark:hover:text-white"
             >
               <option value="ALL">All Status</option>
               <option value="PENDING">Pending</option>
@@ -462,7 +462,7 @@ export default function InvestmentsPage() {
             <select 
               value={timeframeFilter}
               onChange={(e) => setTimeframeFilter(e.target.value)}
-              className="bg-[#141414] border border-white/5 rounded-xl px-4 py-2.5 text-xs font-bold text-gray-400 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all appearance-none cursor-pointer hover:bg-[#1c1c1c] min-w-[150px] text-center uppercase tracking-widest shadow-inner hover:text-white"
+              className="bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-gray-400 outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all appearance-none cursor-pointer hover:bg-slate-100 dark:hover:bg-[#1c1c1c] min-w-[150px] text-center uppercase tracking-widest shadow-sm hover:text-slate-900 dark:hover:text-white"
             >
               <option value="ALL">All Time</option>
               <option value="TODAY">Today</option>
@@ -490,14 +490,14 @@ export default function InvestmentsPage() {
 
         {/* Specific Date Picker */}
         {timeframeFilter === "SPECIFIC" && (
-          <div className="p-4 bg-white/[0.02] border-b border-white/5 flex items-center justify-center gap-4 animate-in slide-in-from-top duration-300">
-            <div className="flex items-center gap-3 bg-[#111] px-4 py-2 rounded-xl border border-white/5 shadow-inner">
-              <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Select Date:</span>
+          <div className="p-4 bg-slate-50 dark:bg-white/[0.02] border-b border-slate-100 dark:border-white/5 flex items-center justify-center gap-4 animate-in slide-in-from-top duration-300">
+            <div className="flex items-center gap-3 bg-white dark:bg-[#111] px-4 py-2 rounded-xl border border-slate-200 dark:border-white/5 shadow-sm">
+              <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Select Date:</span>
               <input 
                 type="date" 
                 value={startDateFilter}
                 onChange={(e) => setStartDateFilter(e.target.value)}
-                className="bg-transparent text-xs font-bold text-white outline-none [color-scheme:dark] cursor-pointer"
+                className="bg-transparent text-xs font-bold text-gray-900 dark:text-white outline-none cursor-pointer"
               />
             </div>
           </div>
@@ -507,22 +507,22 @@ export default function InvestmentsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-center border-collapse">
             <thead>
-              <tr className="border-b border-white/5 bg-white/[0.02]">
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Date</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Investor Splits</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Total (USD)</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Total (BDT)</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Note</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Actions</th>
+              <tr className="border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/[0.02]">
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-wider text-center">Date</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-center">Investor Splits</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-center">Total (USD)</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-center">Total (BDT)</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-center">Note</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y border-slate-100 dark:divide-white/5">
               {investments.length === 0 && !isLoading ? (
-                <tr><td colSpan={6} className="px-6 py-12 text-center text-gray-500 italic">No investment entries found.</td></tr>
+                <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-400 dark:text-gray-500 italic">No investment entries found.</td></tr>
               ) : (
                 investments.map((inv) => (
-                  <tr key={inv._id} className="hover:bg-white/[0.02] transition-colors group">
-                    <td className="px-6 py-4 text-sm text-gray-400 whitespace-nowrap text-center">
+                  <tr key={inv._id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors group">
+                    <td className="px-6 py-4 text-sm text-slate-400 dark:text-gray-400 whitespace-nowrap text-center font-medium">
                       {formatDate(inv.date)}
                     </td>
                     <td className="px-6 py-4">
@@ -533,15 +533,15 @@ export default function InvestmentsPage() {
                           const owed = Math.max(0, target - paid);
                           
                           return (
-                          <div key={i} className="flex items-center gap-3 bg-[#111] p-1.5 rounded-lg border border-white/5 w-full max-w-sm justify-between">
+                          <div key={i} className="flex items-center gap-3 bg-slate-50 dark:bg-[#111] p-1.5 rounded-lg border border-slate-200 dark:border-white/5 w-full max-w-sm justify-between shadow-sm">
                             <button
                               onClick={() => handleToggleStatus(inv._id, c.coOwner._id, c.status)}
                               disabled={session?.user?.role !== "SUPER_ADMIN" || c.status === "CLEARED"}
                               className={cn(
                                 "w-20 px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest transition-all text-center border",
                                 c.status === "CLEARED" 
-                                  ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" 
-                                  : "bg-rose-500/10 text-rose-500 border-rose-500/20 hover:bg-rose-500/20 active:scale-95",
+                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 border-emerald-500/20" 
+                                  : "bg-rose-500/10 text-rose-600 dark:text-rose-500 border-rose-500/20 hover:bg-rose-500/20 active:scale-95",
                                 (session?.user?.role !== "SUPER_ADMIN" || c.status === "CLEARED") && "cursor-not-allowed opacity-80"
                               )}
                             >
@@ -560,22 +560,22 @@ export default function InvestmentsPage() {
                                     />
                                   </div>
                                 ) : (
-                                  <div className="w-8 h-8 rounded-full bg-[#111624] border border-white/10 flex items-center justify-center text-[10px] font-black text-gray-500 group-hover:border-blue-500/50 transition-all">
+                                  <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-[#111624] border border-slate-200 dark:border-white/10 flex items-center justify-center text-[10px] font-black text-slate-400 dark:text-gray-500 group-hover:border-blue-500/50 transition-all">
                                     {c.coOwner.name.charAt(0)}
                                   </div>
                                 )}
-                                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#111] rounded-full" />
+                                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-[#111] rounded-full" />
                               </div>
-                              <span className="text-gray-300 text-xs font-black uppercase tracking-tight group-hover:text-white transition-colors">{c.coOwner.name}</span>
+                              <span className="text-slate-700 dark:text-gray-300 text-xs font-black uppercase tracking-tight group-hover:text-blue-600 dark:group-hover:text-white transition-colors">{c.coOwner.name}</span>
                             </div>
                             <div className="flex flex-col text-center w-28 pr-1">
-                              <span className="text-white font-mono text-[11px] font-bold">
+                              <span className="text-gray-900 dark:text-white font-mono text-[11px] font-bold">
                                 {c.status === "CLEARED" || owed === 0 
                                   ? "Paid: " + formatCurrency(target, "BDT") 
                                   : "Due: " + formatCurrency(owed, "BDT")}
                               </span>
                               {c.status === "PENDING" && paid > 0 && (
-                                <span className="text-emerald-500/70 text-[9px] font-mono leading-tight">
+                                <span className="text-emerald-600 dark:text-emerald-500/70 text-[9px] font-mono leading-tight">
                                   Paid: {formatCurrency(paid, "BDT")}
                                 </span>
                               )}
@@ -584,14 +584,14 @@ export default function InvestmentsPage() {
                         )})}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-400 text-center">
+                    <td className="px-6 py-4 text-sm text-slate-400 dark:text-gray-400 text-center">
                       {formatCurrency(inv.amountUSD, "USD")}
                     </td>
-                    <td className="px-6 py-4 text-sm text-white font-medium text-center">
+                    <td className="px-6 py-4 text-sm text-slate-900 dark:text-white font-bold text-center">
                       {formatCurrency(inv.amountBDT, "BDT")}
-                      <div className="text-[10px] text-gray-500 mt-0.5">@ {inv.exchangeRate}</div>
+                      <div className="text-[10px] text-slate-400 dark:text-gray-500 mt-0.5 font-medium">@ {inv.exchangeRate}</div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-400 truncate max-w-xs text-center">
+                    <td className="px-6 py-4 text-sm text-slate-400 dark:text-gray-400 truncate max-w-xs text-center font-medium">
                       {inv.note || "—"}
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -652,13 +652,13 @@ export default function InvestmentsPage() {
 
       <Modal isOpen={showAddForm} onClose={() => setShowAddForm(false)} className="max-w-3xl">
         {/* Header - Sticky */}
-        <div className="p-10 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-primary/20 to-transparent shrink-0">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+        <div className="p-10 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-gradient-to-r from-primary/10 to-transparent shrink-0">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Plus className="w-5 h-5 text-primary" /> Record New Investment
           </h2>
           <button 
             onClick={() => setShowAddForm(false)}
-            className="text-gray-500 hover:text-white transition-colors"
+            className="text-slate-400 hover:text-slate-900 dark:text-gray-500 dark:hover:text-white transition-colors bg-slate-100 dark:bg-white/5 p-2 rounded-full"
           >
             ✕
           </button>
@@ -666,13 +666,13 @@ export default function InvestmentsPage() {
 
         <form onSubmit={handleAddInvestment} className="flex flex-col flex-1 overflow-hidden">
           {/* Scrollable Form Body */}
-          <div className="flex-1 overflow-y-auto p-10 space-y-8 scrollbar-thin scrollbar-track-white/5 scrollbar-thumb-white/10">
+          <div className="flex-1 overflow-y-auto p-10 space-y-8 scrollbar-thin scrollbar-track-slate-100 dark:scrollbar-track-white/5 scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">Total Investment (BDT)</label>
+                <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">Total Investment (BDT)</label>
                 <div className="relative h-14 group">
                   <div className="absolute left-5 inset-y-0 flex items-center pointer-events-none">
-                    <span className="text-gray-500 font-bold text-xl group-focus-within:text-primary transition-colors">৳</span>
+                    <span className="text-slate-400 dark:text-gray-500 font-bold text-xl group-focus-within:text-primary transition-colors">৳</span>
                   </div>
                   <input 
                     type="number" 
@@ -680,13 +680,13 @@ export default function InvestmentsPage() {
                     value={amountBDT}
                     onChange={(e) => setAmountBDT(e.target.value)}
                     placeholder="e.g. 360000"
-                    className="w-full h-full bg-[#111111] border border-white/5 rounded-2xl pl-14 pr-6 text-white outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all text-lg font-mono placeholder:text-gray-800"
+                    className="w-full h-full bg-slate-50 dark:bg-[#111111] border border-slate-200 dark:border-white/5 rounded-2xl pl-14 pr-6 text-slate-900 dark:text-white outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all text-lg font-mono placeholder:text-slate-300 dark:placeholder:text-gray-800 shadow-sm"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">USD Equivalent (Read-Only)</label>
+                <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">USD Equivalent (Read-Only)</label>
                 <div className="relative h-14">
                   <div className="absolute left-5 inset-y-0 flex items-center pointer-events-none">
                     <span className="text-primary/40 font-bold text-xl">$</span>
@@ -695,16 +695,16 @@ export default function InvestmentsPage() {
                     type="text" 
                     readOnly
                     value={amountBDT && exchangeRate ? (parseFloat(amountBDT) / parseFloat(exchangeRate)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "0.00"}
-                    className="w-full h-full bg-[#111111]/50 border border-white/5 rounded-2xl pl-14 pr-6 text-primary/60 outline-none font-mono text-lg cursor-not-allowed"
+                    className="w-full h-full bg-slate-100/50 dark:bg-[#111111]/50 border border-slate-200 dark:border-white/5 rounded-2xl pl-14 pr-6 text-primary/60 dark:text-primary/60 outline-none font-mono text-lg cursor-not-allowed shadow-inner"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">Exchange Rate (1$ = ?)</label>
+                <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">Exchange Rate (1$ = ?)</label>
                 <div className="relative h-14 group">
                   <div className="absolute left-5 inset-y-0 flex items-center pointer-events-none">
-                    <span className="text-gray-500 font-bold text-lg group-focus-within:text-primary transition-colors">৳</span>
+                    <span className="text-slate-400 dark:text-gray-500 font-bold text-lg group-focus-within:text-primary transition-colors">৳</span>
                   </div>
                   <input 
                     type="number" 
@@ -712,37 +712,37 @@ export default function InvestmentsPage() {
                     value={exchangeRate}
                     onChange={(e) => setExchangeRate(e.target.value)}
                     placeholder=" e.g. 120"
-                    className="w-full h-full bg-[#111111] border border-white/5 rounded-2xl pl-14 pr-6 text-white outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all font-mono"
+                    className="w-full h-full bg-slate-50 dark:bg-[#111111] border border-slate-200 dark:border-white/5 rounded-2xl pl-14 pr-6 text-slate-900 dark:text-white outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all font-mono shadow-sm"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">Effective Date</label>
+                <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">Effective Date</label>
                 <div className="relative h-14 group">
                   <div className="absolute left-5 inset-y-0 flex items-center pointer-events-none">
-                    <Calendar className="w-5 h-5 text-gray-500 group-focus-within:text-primary transition-colors" />
+                    <Calendar className="w-5 h-5 text-slate-400 dark:text-gray-500 group-focus-within:text-primary transition-colors" />
                   </div>
                   <input 
                     type="date" 
                     required 
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full h-full bg-[#111111] border border-white/5 rounded-2xl pl-14 pr-6 text-white outline-none focus:border-primary/50 transition-all [color-scheme:dark] uppercase tracking-widest text-xs font-bold"
+                    className="w-full h-full bg-slate-50 dark:bg-[#111111] border border-slate-200 dark:border-white/5 rounded-2xl pl-14 pr-6 text-slate-900 dark:text-white outline-none focus:border-primary/50 transition-all dark:[color-scheme:dark] uppercase tracking-widest text-xs font-bold shadow-sm"
                   />
                 </div>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">Note / Reference (Mandatory Trace)</label>
+              <label className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-[0.2em] ml-1 mb-2 block">Note / Reference (Mandatory Trace)</label>
               <textarea 
                 value={note}
                 required
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="e.g. Initial cloud server setup capital or marketing budget for Q1"
                 rows={2}
-                className="w-full bg-[#111111] border border-white/5 rounded-2xl py-5 px-6 text-white outline-none focus:border-primary/50 transition-all resize-none text-sm placeholder:text-gray-700 font-medium"
+                className="w-full bg-slate-50 dark:bg-[#111111] border border-slate-200 dark:border-white/5 rounded-2xl py-5 px-6 text-slate-900 dark:text-white outline-none focus:border-primary/50 transition-all resize-none text-sm placeholder:text-slate-300 dark:placeholder:text-gray-700 font-medium shadow-sm"
               />
             </div>
 
@@ -760,18 +760,18 @@ export default function InvestmentsPage() {
           </div>
 
           {/* Footer - Sticky */}
-          <div className="p-10 border-t border-white/5 flex gap-6 shrink-0 bg-[#0a0a0a]">
+          <div className="p-10 border-t border-slate-100 dark:border-white/5 flex gap-6 shrink-0 bg-slate-50 dark:bg-[#0a0a0a]">
             <button 
               type="button"
               onClick={() => setShowAddForm(false)}
-              className="flex-1 h-14 bg-[#111111] hover:bg-[#1a1a1a] border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 hover:text-white transition-all shadow-xl"
+              className="flex-1 h-14 bg-white dark:bg-[#111111] hover:bg-slate-100 dark:hover:bg-[#1a1a1a] border border-slate-200 dark:border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-gray-500 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm"
             >
               Terminate
             </button>
             <button 
               type="submit"
               disabled={isSubmitting}
-              className="flex-[2] h-14 bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-[0.3em] text-[10px] rounded-2xl shadow-2xl shadow-primary/30 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
+              className="flex-[2] h-14 bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-[0.3em] text-[10px] rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
             >
               {isSubmitting ? "Broadcasting..." : "Establish Investment"}
               <ChevronRight className="w-4 h-4" />
@@ -783,13 +783,13 @@ export default function InvestmentsPage() {
       {/* Edit Investment Modal Overlay */}
       <Modal isOpen={showEditForm} onClose={closeEditForm} className="max-w-3xl">
         {/* Header - Sticky */}
-        <div className="p-10 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-blue-500/20 to-transparent shrink-0">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+        <div className="p-10 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-gradient-to-r from-blue-500/10 to-transparent shrink-0">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Edit2 className="w-5 h-5 text-blue-500" /> Edit Record & Recalculate
           </h2>
           <button 
             onClick={closeEditForm}
-            className="text-gray-500 hover:text-white transition-colors"
+            className="text-slate-400 hover:text-slate-900 dark:text-gray-500 dark:hover:text-white transition-colors bg-slate-100 dark:bg-white/5 p-2 rounded-full"
           >
             ✕
           </button>
@@ -891,18 +891,18 @@ export default function InvestmentsPage() {
           </div>
 
           {/* Footer - Sticky */}
-          <div className="p-10 border-t border-white/5 flex gap-6 shrink-0 bg-[#0a0a0a]">
+          <div className="p-10 border-t border-slate-100 dark:border-white/5 flex gap-6 shrink-0 bg-slate-50 dark:bg-[#0a0a0a]">
             <button 
               type="button"
               onClick={closeEditForm}
-              className="flex-1 h-14 bg-[#111111] hover:bg-[#1a1a1a] border border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 hover:text-white transition-all shadow-xl"
+              className="flex-1 h-14 bg-white dark:bg-[#111111] hover:bg-slate-100 dark:hover:bg-[#1a1a1a] border border-slate-200 dark:border-white/5 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-gray-500 hover:text-slate-900 dark:hover:text-white transition-all shadow-sm"
             >
               Discard
             </button>
             <button 
               type="submit"
               disabled={isSubmitting}
-              className="flex-[2] h-14 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-[0.3em] text-[10px] rounded-2xl shadow-2xl shadow-blue-500/30 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
+              className="flex-[2] h-14 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-[0.3em] text-[10px] rounded-2xl shadow-xl shadow-blue-500/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
             >
               {isSubmitting ? "Updating..." : "Update Vault"}
               <ChevronRight className="w-4 h-4" />

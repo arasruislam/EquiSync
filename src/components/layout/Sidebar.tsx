@@ -125,12 +125,12 @@ export default function Sidebar() {
   return (
     <aside 
       className={cn(
-        "h-screen sticky top-0 bg-[#0a0a0a] border-r border-white/5 transition-all duration-300 flex flex-col z-50",
+        "h-screen sticky top-0 bg-white dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-white/5 transition-all duration-300 flex flex-col z-50",
         collapsed ? "w-20" : "w-64"
       )}
     >
       {/* Logo Area */}
-      <div className="p-6 flex items-center justify-between border-b border-white/5">
+      <div className="p-6 flex items-center justify-between border-b border-gray-100 dark:border-white/5">
         {!collapsed && (
           <div className="flex items-center gap-3 shrink-0">
             <Image 
@@ -138,16 +138,16 @@ export default function Sidebar() {
               alt="QuoteXStudio Logo" 
               width={28} 
               height={28} 
-              className="object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.1)]" 
+              className="object-contain drop-shadow-[0_0_8px_rgba(37,99,235,0.1)] dark:drop-shadow-[0_0_8px_rgba(255,255,255,0.1)]" 
             />
-            <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-white to-gray-500 bg-clip-text text-transparent">
+            <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-slate-900 to-slate-500 dark:from-white dark:to-gray-500 bg-clip-text text-transparent">
               QuoteXStudio
             </span>
           </div>
         )}
         <button 
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1.5 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-colors"
+          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
         >
           {collapsed ? <Menu className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
         </button>
@@ -170,28 +170,30 @@ export default function Sidebar() {
                   }}
                   className={cn(
                     "w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all group",
-                    hasActiveChild ? "bg-white/5 text-white" : "text-gray-500 hover:text-white hover:bg-white/5"
+                    hasActiveChild 
+                      ? "bg-slate-100 dark:bg-white/5 text-slate-900 dark:text-white" 
+                      : "text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5"
                   )}
                 >
                   <div className="flex items-center gap-3 relative">
                     <div className={cn(
                       "transition-all duration-300 rounded-lg p-1 relative z-10",
-                      item.haloShadow && "bg-white/[0.02] border border-white/[0.05]"
+                      item.haloShadow && "bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/[0.05]"
                     )}>
                       {item.glowColor && (
                         <div className={cn("absolute inset-0 rounded-lg blur-md opacity-20", item.glowColor.replace('text-', 'bg-'))} />
                       )}
-                      <item.icon className={cn("w-5 h-5 shrink-0 transition-all", hasActiveChild ? "text-primary/70" : item.glowColor || "group-hover:text-white")} />
+                      <item.icon className={cn("w-5 h-5 shrink-0 transition-all", hasActiveChild ? "text-primary/70" : item.glowColor || "group-hover:text-primary dark:group-hover:text-white")} />
                     </div>
                     {!collapsed && <span className="font-medium text-sm truncate">{item.label}</span>}
                   </div>
                   {!collapsed && (
-                    <ChevronDown className={cn("w-4 h-4 transition-transform text-white/30", isOpen && "rotate-180")} />
+                    <ChevronDown className={cn("w-4 h-4 transition-transform text-gray-300 dark:text-white/30", isOpen && "rotate-180")} />
                   )}
                 </button>
                 
                 {isOpen && !collapsed && (
-                  <div className="ml-[1.35rem] pl-4 border-l border-white/10 space-y-1 mt-1">
+                  <div className="ml-[1.35rem] pl-4 border-l border-gray-200 dark:border-white/10 space-y-1 mt-1">
                     {item.subItems.map(subItem => {
                       if (!subItem.roles.includes(session?.user?.role || "EMPLOYEE")) return null;
                       
@@ -206,7 +208,7 @@ export default function Sidebar() {
                               onClick={() => toggleGroup(subItem.label)}
                               className={cn(
                                 "w-full flex items-center justify-between px-2 py-1.5 rounded-lg transition-all group",
-                                hasActiveDeepChild ? "text-white font-medium" : "text-gray-400 hover:text-white"
+                                hasActiveDeepChild ? "text-gray-900 dark:text-white font-medium" : "text-gray-400 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                               )}
                             >
                               <span className="text-xs uppercase tracking-wider font-bold">{subItem.label}</span>
@@ -214,7 +216,7 @@ export default function Sidebar() {
                             </button>
                             
                             {isSubOpen && (
-                              <div className="pl-3 space-y-0.5 border-l border-white/5 ml-1">
+                              <div className="pl-3 space-y-0.5 border-l border-gray-100 dark:border-white/5 ml-1">
                                 {subItem.subItems.map(deepItem => {
                                   if (!deepItem.roles.includes(session?.user?.role || "EMPLOYEE")) return null;
                                   const active = pathname === deepItem.href;
@@ -225,8 +227,8 @@ export default function Sidebar() {
                                       className={cn(
                                         "flex items-center gap-2 px-2 py-1.5 rounded-md transition-all relative group text-sm",
                                         active 
-                                          ? "bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--primary),0.3)] border border-primary/20" 
-                                          : "text-gray-500 hover:text-white hover:bg-white/5 border border-transparent"
+                                          ? "bg-primary/10 text-primary shadow-sm dark:shadow-[0_0_12px_rgba(var(--primary),0.3)] border border-primary/20" 
+                                          : "text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent"
                                       )}
                                     >
                                       <span className="truncate">{deepItem.label}</span>
@@ -250,8 +252,8 @@ export default function Sidebar() {
                           className={cn(
                             "flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative group",
                             active 
-                              ? "bg-primary/10 text-primary shadow-[0_0_12px_rgba(var(--primary),0.3)] border border-primary/20" 
-                              : "text-gray-500 hover:text-white hover:bg-white/5 border border-transparent"
+                              ? "bg-primary/10 text-primary shadow-sm dark:shadow-[0_0_12px_rgba(var(--primary),0.3)] border border-primary/20" 
+                              : "text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 border border-transparent"
                           )}
                         >
                           <span className="font-medium text-sm truncate">{subItem.label}</span>
@@ -276,17 +278,17 @@ export default function Sidebar() {
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group relative",
                 active 
                   ? "bg-primary/10 text-primary" 
-                  : "text-gray-500 hover:text-white hover:bg-white/5"
+                  : "text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5"
               )}
             >
               <div className={cn(
                 "transition-all duration-300 rounded-lg p-1 relative z-10",
-                item.haloShadow && "bg-white/[0.02] border border-white/[0.05]"
+                item.haloShadow && "bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/[0.05]"
               )}>
                 {(item as any).glowColor && (
                   <div className={cn("absolute inset-0 rounded-lg blur-md opacity-20", (item as any).glowColor.replace('text-', 'bg-'))} />
                 )}
-                <item.icon className={cn("w-5 h-5 shrink-0 transition-all", active ? "text-primary" : (item as any).glowColor || "group-hover:text-white")} />
+                <item.icon className={cn("w-5 h-5 shrink-0 transition-all", active ? "text-primary" : (item as any).glowColor || "group-hover:text-primary dark:group-hover:text-white")} />
               </div>
               {!collapsed && (
                 <span className="font-medium text-sm truncate">{item.label}</span>

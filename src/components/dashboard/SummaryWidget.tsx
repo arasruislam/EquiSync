@@ -17,32 +17,32 @@ interface SummaryWidgetProps {
 
 const themeConfigs = {
   emerald: {
-    color: "text-emerald-400",
+    color: "text-emerald-600 dark:text-emerald-400",
     accent: "#10b981",
-    bg: "bg-emerald-400/5",
+    bg: "bg-emerald-50 dark:bg-emerald-400/5",
     glow: "rgba(16, 185, 129, 0.4)",
-    border: "border-emerald-500/20",
+    border: "border-emerald-200 dark:border-emerald-500/20",
   },
   red: {
-    color: "text-[#ef4444]",
+    color: "text-rose-600 dark:text-[#ef4444]",
     accent: "#ef4444",
-    bg: "bg-[#ef4444]/5",
+    bg: "bg-rose-50 dark:bg-[#ef4444]/5",
     glow: "rgba(239, 68, 68, 0.4)",
-    border: "border-[#ef4444]/20",
+    border: "border-rose-200 dark:border-[#ef4444]/20",
   },
   amber: {
-    color: "text-amber-400",
+    color: "text-amber-600 dark:text-amber-400",
     accent: "#f59e0b",
-    bg: "bg-amber-400/5",
+    bg: "bg-amber-50 dark:bg-amber-400/5",
     glow: "rgba(245, 158, 11, 0.4)",
-    border: "border-amber-500/20",
+    border: "border-amber-200 dark:border-amber-500/20",
   },
   blue: {
-    color: "text-blue-400",
+    color: "text-blue-600 dark:text-blue-400",
     accent: "#3b82f6",
-    bg: "bg-blue-400/5",
+    bg: "bg-blue-50 dark:bg-blue-400/5",
     glow: "rgba(59, 130, 246, 0.4)",
-    border: "border-blue-500/20",
+    border: "border-blue-200 dark:border-blue-500/20",
   },
 };
 
@@ -62,7 +62,7 @@ export function SummaryWidget({
     <div
       className={cn(
         "group relative p-6 rounded-3xl transition-all duration-700 cursor-default flex flex-col justify-between overflow-hidden",
-        "bg-white/[0.03] backdrop-blur-xl border border-white/10 hover:border-white/20 shadow-2xl shadow-black/20"
+        "bg-white dark:bg-[#050B18] backdrop-blur-xl border border-slate-100 dark:border-white/10 hover:border-slate-200 dark:hover:border-white/20 shadow-md dark:shadow-2xl dark:shadow-black/20"
       )}
     >
       {/* Accent Glow Background */}
@@ -76,17 +76,17 @@ export function SummaryWidget({
           "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-3",
           theme.bg,
           theme.color,
-          "border border-white/5 backdrop-blur-sm"
+          "border border-slate-100 dark:border-white/5 backdrop-blur-sm"
         )}>
           <Icon className="w-6 h-6" />
         </div>
         
         <div className="flex flex-col items-end">
-          <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest leading-none mb-1 group-hover:text-gray-400 transition-colors">
+          <span className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest leading-none mb-1 group-hover:text-slate-600 dark:group-hover:text-gray-400 transition-colors">
             {label}
           </span>
           {description && (
-            <span className="text-[8px] text-gray-600 font-bold uppercase tracking-tight">
+            <span className="text-[8px] text-slate-400 dark:text-gray-600 font-bold uppercase tracking-tight">
               {description}
             </span>
           )}
@@ -94,11 +94,11 @@ export function SummaryWidget({
       </div>
 
       <div className="relative z-10 space-y-1">
-        <h3 className="text-2xl font-black text-white tracking-tight flex flex-col">
-          <span className={cn("transition-colors duration-500 group-hover:text-white", theme.color)}>
+        <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex flex-col">
+          <span className={cn("transition-colors duration-500 group-hover:text-slate-900 dark:group-hover:text-white", theme.color)}>
             {formatCurrency(amountBDT !== undefined ? amountBDT : (value || amountUSD || 0) * exchangeRate, "BDT")}
           </span>
-          <span className="text-[10px] text-gray-400 font-bold opacity-70 mt-0.5">
+          <span className="text-[10px] text-slate-400 dark:text-gray-400 font-bold opacity-70 mt-0.5">
             ({formatCurrency(amountUSD !== undefined ? amountUSD : (value || (amountBDT ? amountBDT / exchangeRate : 0)), "USD")})
           </span>
         </h3>

@@ -1,8 +1,9 @@
 "use client";
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Sector } from "recharts";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { formatCurrency } from "@/lib/utils";
+import { useTheme } from "next-themes";
 
 interface ResourcePieChartProps {
   data: {
@@ -18,13 +19,13 @@ const renderActiveShape = (props: any) => {
 
   return (
     <g>
-      <text x={cx} y={cy - 15} dy={8} textAnchor="middle" fill="#9ca3af" fontSize={9} fontWeight={800} className="uppercase tracking-widest">
+      <text x={cx} y={cy - 15} dy={8} textAnchor="middle" fill={props.currentTheme === 'light' ? '#64748b' : '#9ca3af'} fontSize={9} fontWeight={800} className="uppercase tracking-widest">
         {payload.name}
       </text>
-      <text x={cx} y={cy + 8} dy={8} textAnchor="middle" fill="white" fontSize={15} fontWeight={900}>
+      <text x={cx} y={cy + 8} dy={8} textAnchor="middle" fill={props.currentTheme === 'light' ? '#0f172a' : 'white'} fontSize={15} fontWeight={900}>
         {formatCurrency(value * 120, "BDT")}
       </text>
-      <text x={cx} y={cy + 25} dy={8} textAnchor="middle" fill="#6b7280" fontSize={9} fontWeight={700} className="italic opacity-70">
+      <text x={cx} y={cy + 25} dy={8} textAnchor="middle" fill={props.currentTheme === 'light' ? '#94a3b8' : '#6b7280'} fontSize={9} fontWeight={700} className="italic opacity-70">
         ({formatCurrency(value, "USD")})
       </text>
       <Sector
@@ -52,6 +53,12 @@ const renderActiveShape = (props: any) => {
 
 export default function ResourcePieChart({ data }: ResourcePieChartProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const { theme: currentTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const onPieEnter = (_: any, index: number) => {
     setActiveIndex(index);
@@ -63,7 +70,7 @@ export default function ResourcePieChart({ data }: ResourcePieChartProps) {
         <PieChart>
           <Pie
             activeIndex={activeIndex}
-            activeShape={renderActiveShape}
+            activeShape={(props: any) => renderActiveShape({ ...props, currentTheme })}
             data={data}
             cx="50%"
             cy="50%"

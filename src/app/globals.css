@@ -24,6 +24,16 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+    
+    /* UI Components - Light */
+    --card-bg: 0 0% 100%;
+    --card-border: 214.3 31.8% 91.4%;
+    --input-bg: 210 40% 96.1%;
+    --sidebar-bg: 0 0% 100%;
+    
+    /* Scrollbar Variables - Light */
+    --scrollbar-thumb: rgba(0, 0, 0, 0.1);
+    --scrollbar-thumb-hover: rgba(37, 99, 235, 0.4);
   }
 
   .dark {
@@ -46,6 +56,16 @@
     --border: 222 47% 15%;
     --input: 222 47% 15%;
     --ring: 212 100% 55%;
+
+    /* UI Components - Dark */
+    --card-bg: 222 47% 9%;
+    --card-border: 222 47% 15%;
+    --input-bg: 222 47% 12%;
+    --sidebar-bg: 0 0% 4%; /* bg-[#0a0a0a] equivalent */
+
+    /* Scrollbar Variables - Dark */
+    --scrollbar-thumb: rgba(255, 255, 255, 0.05);
+    --scrollbar-thumb-hover: rgba(37, 99, 235, 0.3);
   }
 }
 
@@ -57,10 +77,10 @@
     @apply bg-background text-foreground;
   }
 
-  /* Custom Scrollbar Styles - Refined Glassmorphism */
+  /* Custom Scrollbar Styles - Theme Aware */
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.05) transparent;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
   }
 
   ::-webkit-scrollbar {
@@ -73,16 +93,16 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.05); /* Frosted glass effect */
+    background: var(--scrollbar-thumb);
     border-radius: 100px;
     border: 1px solid transparent;
     background-clip: padding-box;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* Interactive Visibility: Smooth transition on container interaction */
+  /* Interactive Visibility */
   *:hover::-webkit-scrollbar-thumb {
-    background: rgba(37, 99, 235, 0.3); /* Subtle blue tint when hovering area */
+    background: var(--scrollbar-thumb-hover);
     background-clip: padding-box;
   }
 

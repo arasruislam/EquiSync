@@ -11,6 +11,7 @@ import {
   Tooltip, 
   ResponsiveContainer, 
 } from "recharts";
+import { useTheme } from "next-themes";
 import { 
   TrendingUp, 
   TrendingDown,
@@ -50,6 +51,12 @@ export default function AnalyticsGraph() {
   const [isLoading, setIsLoading] = useState(true);
   const { setIsContentLoading } = useGlobalLoading();
   const [founderInfoMap, setFounderInfoMap] = useState<Record<string, any>>({});
+  const { theme: currentTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     fetchAnalytics();
@@ -117,11 +124,11 @@ export default function AnalyticsGraph() {
       
       return (
         <div 
-          className="bg-[#050B18]/95 border p-5 rounded-3xl shadow-2xl backdrop-blur-2xl z-50 min-w-[260px] transition-all duration-300"
+          className="bg-white/98 dark:bg-[#050B18]/95 border border-slate-100 dark:border-white/5 p-5 rounded-3xl shadow-2xl backdrop-blur-2xl z-50 min-w-[260px] transition-all duration-300"
           style={{ borderColor: `${primaryColor}40`, boxShadow: `0 10px 40px -10px ${primaryColor}20` }}
         >
-          <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">
+          <div className="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-white/5 pb-2">
+            <p className="text-[10px] font-black text-slate-400 dark:text-gray-400 uppercase tracking-widest leading-none">
               {format(date, "MMMM dd, yyyy")}
             </p>
             <ShieldCheck className="w-3.5 h-3.5" style={{ color: primaryColor, opacity: 0.5 }} />
@@ -162,15 +169,15 @@ export default function AnalyticsGraph() {
                       ) : (
                         <div className="w-2 h-2 rounded-full shadow-[0_0_10px_currentColor]" style={{ backgroundColor: color, color: color }} />
                       )}
-                      <span className="text-[11px] font-bold text-gray-300 capitalize">
+                      <span className="text-[11px] font-bold text-slate-600 dark:text-gray-300 capitalize">
                         {label}
                       </span>
                     </div>
                     <div className="text-right">
-                      <span className="text-[14px] font-black text-white block leading-tight">
+                      <span className="text-[14px] font-black text-slate-900 dark:text-white block leading-tight">
                         {formatCurrency(p.value * 120, "BDT")}
                       </span>
-                      <span className="text-[10px] font-bold text-gray-500 block opacity-80 italic">
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-gray-500 block opacity-80 italic">
                         ({formatCurrency(p.value, "USD")})
                       </span>
                     </div>
@@ -186,24 +193,24 @@ export default function AnalyticsGraph() {
   };
 
   return (
-    <div className="bg-[#050B18]/50 backdrop-blur-xl border border-white/10 rounded-[32px] overflow-hidden shadow-2xl shadow-black/20 transition-all duration-700 hover:border-blue-500/30 group">
+    <div className="bg-white dark:bg-[#050B18]/50 backdrop-blur-xl border border-slate-100 dark:border-white/10 rounded-[32px] overflow-hidden shadow-xl dark:shadow-2xl dark:shadow-black/20 transition-all duration-700 hover:border-blue-500/30 dark:hover:border-blue-500/30 group">
       {/* Header & Filters */}
-      <div className="p-8 border-b border-white/5 flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-white/[0.02]">
+      <div className="p-8 border-b border-slate-100 dark:border-white/5 flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-slate-50 dark:bg-white/[0.02]">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-600/20 flex items-center justify-center text-blue-500 group-hover:scale-110 group-hover:rotate-2 transition-all duration-700">
+          <div className="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-600/20 flex items-center justify-center text-blue-600 dark:text-blue-500 group-hover:scale-110 group-hover:rotate-2 transition-all duration-700">
             <TrendingUp className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+            <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
               Financial Performance Analytics
             </h2>
-            <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">SaaS Business Intelligence Matrix</p>
+            <p className="text-[10px] text-slate-400 dark:text-gray-500 font-black uppercase tracking-[0.2em]">SaaS Business Intelligence Matrix</p>
           </div>
         </div>
 
         <div className="flex items-center flex-wrap gap-4">
           {/* Temporal range filter */}
-          <div className="flex bg-black/40 backdrop-blur-md border border-white/5 p-1 rounded-2xl shadow-inner">
+          <div className="flex bg-slate-100 dark:bg-black/40 backdrop-blur-md border border-slate-200 dark:border-white/5 p-1 rounded-2xl shadow-inner text">
             {ranges.map(r => (
               <button
                 key={r.value}
@@ -211,7 +218,7 @@ export default function AnalyticsGraph() {
                 className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-500 border border-transparent ${
                   range === r.value 
                     ? "bg-[#10b981]/10 text-[#10b981] border-[#10b981]/20 shadow-lg shadow-[#10b981]/10" 
-                    : "text-gray-500 hover:text-gray-300"
+                    : "text-slate-400 dark:text-gray-500 hover:text-slate-900 dark:hover:text-gray-300"
                 }`}
               >
                 {r.label}
@@ -220,7 +227,7 @@ export default function AnalyticsGraph() {
           </div>
 
           {/* Series toggle filter */}
-          <div className="flex bg-black/40 backdrop-blur-md border border-white/5 p-1 rounded-2xl gap-1 shadow-inner">
+          <div className="flex bg-slate-100 dark:bg-black/40 backdrop-blur-md border border-slate-200 dark:border-white/5 p-1 rounded-2xl gap-1 shadow-inner">
             <div className="flex flex-wrap gap-4 items-center animate-in slide-in-from-bottom-2 duration-700">
               {staticSeriesConfig.map((s) => {
                 const isActive = activeSeries.includes(s.key);
@@ -231,7 +238,7 @@ export default function AnalyticsGraph() {
                   className={cn(
                     "flex items-center gap-2.5 px-4 py-2 rounded-2xl transition-all border outline-none group",
                     isActive
-                      ? "bg-white/[0.03] shadow-lg translate-y-[-1px]"
+                      ? "bg-white dark:bg-white/[0.03] shadow-lg translate-y-[-1px]"
                       : "opacity-40 border-transparent hover:opacity-60"
                   )}
                   style={{ 
@@ -246,7 +253,7 @@ export default function AnalyticsGraph() {
                       boxShadow: isActive ? `0 0 12px ${s.glow}` : 'none'
                     }} 
                   />
-                  <span className="text-[11px] font-black uppercase tracking-widest leading-none transition-colors" style={{ color: isActive ? s.color : '#94a3b8' }}>
+                  <span className="text-[11px] font-black uppercase tracking-widest leading-none transition-colors" style={{ color: isActive ? s.color : (currentTheme === 'light' ? '#64748b' : '#94a3b8') }}>
                     {s.key === "income" ? "Global Capital" : "Operating Expense"}
                   </span>
                 </button>
@@ -271,7 +278,7 @@ export default function AnalyticsGraph() {
                     className={cn(
                       "flex items-center gap-2.5 px-3 py-1.5 rounded-2xl transition-all border outline-none group",
                       isActive
-                        ? "bg-white/[0.03] shadow-lg translate-y-[-1px]"
+                        ? "bg-white dark:bg-white/[0.03] shadow-lg translate-y-[-1px]"
                         : "opacity-40 border-transparent hover:opacity-60"
                     )}
                     style={{ 
@@ -306,7 +313,7 @@ export default function AnalyticsGraph() {
                         }}
                       />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest leading-none transition-colors" style={{ color: isActive ? config.color : '#94a3b8' }}>
+                    <span className="text-[10px] font-black uppercase tracking-widest leading-none transition-colors" style={{ color: isActive ? config.color : (currentTheme === 'light' ? '#64748b' : '#94a3b8') }}>
                       {info.name.split(' ')[0]}
                     </span>
                   </button>
@@ -348,12 +355,12 @@ export default function AnalyticsGraph() {
                 );
               })}
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={currentTheme === "light" ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.03)"} vertical={false} />
             <XAxis 
               dataKey="date" 
               axisLine={false} 
               tickLine={false} 
-              tick={{ fill: "#64748b", fontSize: 10, fontWeight: 800 }}
+              tick={{ fill: currentTheme === 'light' ? '#475569' : '#64748b', fontSize: 10, fontWeight: 800 }}
               tickFormatter={(val) => {
                 const d = new Date(val);
                 return range === "year" ? format(d, "MMM") : range === "today" ? format(d, "HH:mm") : format(d, "MMM dd");
@@ -363,11 +370,11 @@ export default function AnalyticsGraph() {
             <YAxis 
               axisLine={false} 
               tickLine={false} 
-              tick={{ fill: "#64748b", fontSize: 10, fontWeight: 800 }}
+              tick={{ fill: currentTheme === 'light' ? '#475569' : '#64748b', fontSize: 10, fontWeight: 800 }}
               tickFormatter={(val) => `$${val}`}
               dx={-10}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: currentTheme === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
             
             {/* Static Series Areas */}
             {staticSeriesConfig.map((s) => {
@@ -443,19 +450,19 @@ export default function AnalyticsGraph() {
       </div>
 
       {/* Footer Info */}
-      <div className="px-8 py-5 bg-white/[0.01] border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6">
+      <div className="px-8 py-5 bg-slate-50 dark:bg-white/[0.01] border-t border-slate-100 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2.5">
             <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.6)]" />
-            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Revenue Growth</span>
+            <span className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest">Revenue Growth</span>
           </div>
           <div className="flex items-center gap-2.5">
             <div className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.6)]" />
-            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Operational Burn</span>
+            <span className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest">Operational Burn</span>
           </div>
           <div className="flex items-center gap-2.5">
             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.6)]" />
-            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Profit Efficiency</span>
+            <span className="text-[10px] font-black text-slate-400 dark:text-gray-500 uppercase tracking-widest">Profit Efficiency</span>
           </div>
         </div>
         <div className="flex items-center gap-2.5 text-blue-500/40">
