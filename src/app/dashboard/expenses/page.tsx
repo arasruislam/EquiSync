@@ -23,6 +23,7 @@ import { formatCurrency, formatDate, cn } from "@/lib/utils";
 const ConfirmDeleteModal = dynamic(() => import("@/components/ui/ConfirmDeleteModal").then(mod => mod.ConfirmDeleteModal), { ssr: false });
 import { useSocket } from "@/components/providers/SocketProvider";
 import { fetchLiveExchangeRate } from "@/lib/exchange-rate";
+import { Modal } from "@/components/ui/Modal";
 
 interface IContribution {
   coOwner: {
@@ -132,7 +133,7 @@ export default function ExpensesPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const rate = 120;
+    const rate = parseFloat(exchangeRate) || 120;
     const totalBDT = parseFloat(amountBDT);
 
     if (isNaN(totalBDT) || totalBDT <= 0) {
@@ -141,8 +142,6 @@ export default function ExpensesPage() {
       return;
     }
 
-    const totalUSD = totalBDT / rate;
-
     try {
       const res = await fetch("/api/expenses", {
         method: "POST",
@@ -150,7 +149,6 @@ export default function ExpensesPage() {
         body: JSON.stringify({
           category,
           amountBDT: totalBDT,
-          amountUSD: totalUSD,
           exchangeRate: rate,
           description,
           vendor,
@@ -199,7 +197,7 @@ export default function ExpensesPage() {
     if (!editingExpenseId) return;
     setIsSubmitting(true);
 
-    const rate = 120;
+    const rate = parseFloat(exchangeRate) || 120;
     const totalBDT = parseFloat(amountBDT);
 
     if (isNaN(totalBDT) || totalBDT <= 0) {
@@ -208,15 +206,12 @@ export default function ExpensesPage() {
       return;
     }
 
-    const totalUSD = totalBDT / rate;
-
     try {
       const res = await fetch(`/api/expenses/${editingExpenseId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           category,
-          amountUSD: totalUSD,
           amountBDT: totalBDT,
           exchangeRate: rate,
           description,
@@ -380,173 +375,163 @@ export default function ExpensesPage() {
         </div>
       </div>
 
-      {showAddForm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-400">
-          <div className="w-full max-w-lg bg-[#141414] border border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
-            <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-rose-500/10 to-transparent">
-              <div>
-                <h2 className="text-2xl font-bold text-white tracking-tight">Record Expense</h2>
-                <p className="text-gray-500 text-sm mt-1">Operational disbursement tracking.</p>
-              </div>
-              <button onClick={() => setShowAddForm(false)} className="text-gray-500 hover:text-white transition-colors bg-white/5 p-2 rounded-full">✕</button>
-            </div>
-            
-            <form onSubmit={handleCreateExpense} className="p-8 space-y-5">
-              <div className="grid grid-cols-2 gap-5">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Category</label>
-                  <select 
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50 appearance-none font-medium"
-                  >
-                    <option value="SOFTWARE">Software / SaaS</option>
-                    <option value="TOOLS">Hardware / Tools</option>
-                    <option value="MARKETING">Ads / Marketing</option>
-                    <option value="OFFICE">Office / Utilities</option>
-                    <option value="FREELANCER">External Freelancer</option>
-                    <option value="MISC">Miscellaneous</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Vendor (Optional)</label>
-                  <input type="text" value={vendor} onChange={(e) => setVendor(e.target.value)} placeholder="e.g. AWS, Adobe, etc." className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Brief Description</label>
-                <input type="text" required value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g. Monthly hosting for client X" className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50" />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Expense Amount (BDT)</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">৳</span>
-                  <input 
-                    type="number" 
-                    required 
-                    value={amountBDT}
-                    onChange={(e) => setAmountBDT(e.target.value)}
-                    placeholder="e.g. 50000"
-                    className="w-full bg-[#1c1c1c] border border-rose-500/10 rounded-xl py-3 pl-10 pr-4 text-white outline-none focus:border-rose-500/50 focus:ring-4 focus:ring-rose-500/5 transition-all text-lg font-mono text-center tracking-wider"
-                  />
-                </div>
-                <p className="text-[10px] text-gray-500 mt-1">Directly deducted from the unified Company Capital Pool.</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-5">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Exchange Rate (USD)</label>
-                  <input type="number" required value={exchangeRate} onChange={(e) => setExchangeRate(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50 text-center font-mono" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Incurred Date</label>
-                  <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50 [color-scheme:dark] text-center uppercase tracking-wider text-sm" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Project Attribution (Optional)</label>
-                <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50 appearance-none font-medium text-center">
-                  <option value="">Operational Overhead</option>
-                  {projects.map(p => <option key={p._id} value={p._id}>{p.title}</option>)}
-                </select>
-              </div>
-
-              <div className="flex gap-4 pt-4">
-                <button type="button" onClick={() => setShowAddForm(false)} className="flex-1 py-4 bg-[#1c1c1c] hover:bg-[#252525] rounded-2xl text-sm font-semibold text-gray-400">Cancel</button>
-                <button type="submit" disabled={isSubmitting} className="flex-[2] py-4 bg-rose-500 hover:bg-rose-600 text-white font-black rounded-2xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 group transition-all">
-                  {isSubmitting ? "Saving..." : "Record Expense"}
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
-              </div>
-            </form>
+      <Modal isOpen={showAddForm} onClose={() => setShowAddForm(false)} className="max-w-lg">
+        <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-rose-500/10 to-transparent">
+          <div>
+            <h2 className="text-2xl font-bold text-white tracking-tight">Record Expense</h2>
+            <p className="text-gray-500 text-sm mt-1">Operational disbursement tracking.</p>
           </div>
+          <button onClick={() => setShowAddForm(false)} className="text-gray-500 hover:text-white transition-colors bg-white/5 p-2 rounded-full">✕</button>
         </div>
-      )}
-
-      {/* Edit Expense Modal Overlay */}
-      {showEditForm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-400">
-          <div className="w-full max-w-lg bg-[#141414] border border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
-            <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-blue-500/10 to-transparent">
-              <div>
-                <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-                  <Edit2 className="w-5 h-5 text-blue-500" /> Edit Record & Recalculate
-                </h2>
-                <p className="text-gray-500 text-sm mt-1">Operational disbursement editing.</p>
-              </div>
-              <button onClick={closeEditForm} className="text-gray-500 hover:text-white transition-colors bg-white/5 p-2 rounded-full">✕</button>
+        
+        <form onSubmit={handleCreateExpense} className="p-8 space-y-5">
+          <div className="grid grid-cols-2 gap-5">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Category</label>
+              <select 
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50 appearance-none font-medium"
+              >
+                <option value="SOFTWARE">Software / SaaS</option>
+                <option value="TOOLS">Hardware / Tools</option>
+                <option value="MARKETING">Ads / Marketing</option>
+                <option value="OFFICE">Office / Utilities</option>
+                <option value="FREELANCER">External Freelancer</option>
+                <option value="MISC">Miscellaneous</option>
+              </select>
             </div>
-            
-            <form onSubmit={handleEditExpense} className="p-8 space-y-5">
-
-
-              <div className="grid grid-cols-2 gap-5">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Type</label>
-                  <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50 appearance-none font-medium text-center">
-                    <option value="SOFTWARE">Software / API</option>
-                    <option value="MARKETING">Marketing</option>
-                    <option value="LEGAL">Legal / Govt</option>
-                    <option value="DEVICE">Hardware / Asset</option>
-                    <option value="OTHER">Other Config</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Date</label>
-                  <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50 text-center uppercase tracking-wider text-sm" style={{ colorScheme: "dark" }} />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center justify-between ml-1">
-                  <span>Total Amount (BDT)</span>
-                  {amountBDT && (
-                    <span className="text-primary font-mono bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">
-                      ≈ ${(parseFloat(amountBDT) / 120).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD
-                    </span>
-                  )}
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-500 font-mono">৳</span>
-                  <input type="number" step="0.01" required value={amountBDT} onChange={(e) => setAmountBDT(e.target.value)} className="w-full pl-9 pr-4 py-3 bg-[#1c1c1c] border border-white/5 rounded-2xl focus:border-rose-500/50 text-white font-mono outline-none text-center tracking-wider" placeholder="0.00" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-5">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Reason</label>
-                  <input type="text" required value={description} onChange={(e) => setDescription(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50 text-center" placeholder="e.g. Server Renewal" />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Vendor (Opt)</label>
-                  <input type="text" value={vendor} onChange={(e) => setVendor(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50 text-center" placeholder="e.g. AWS" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Project Attribution (Optional)</label>
-                <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50 appearance-none font-medium text-center">
-                  <option value="">Operational Overhead</option>
-                  {projects.map(p => <option key={p._id} value={p._id}>{p.title}</option>)}
-                </select>
-              </div>
-
-              <div className="flex gap-4 pt-4">
-                <button type="button" onClick={closeEditForm} className="flex-1 py-4 bg-[#1c1c1c] hover:bg-[#252525] rounded-2xl text-sm font-semibold text-gray-400">Cancel</button>
-                <button type="submit" disabled={isSubmitting} className="flex-[2] py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-2xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 group transition-all">
-                  {isSubmitting ? "Updating..." : "Update Expense"}
-                  <Edit2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                </button>
-              </div>
-            </form>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Vendor (Optional)</label>
+              <input type="text" value={vendor} onChange={(e) => setVendor(e.target.value)} placeholder="e.g. AWS, Adobe, etc." className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50" />
+            </div>
           </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Brief Description</label>
+            <input type="text" required value={description} onChange={(e) => setDescription(e.target.value)} placeholder="e.g. Monthly hosting for client X" className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50" />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Expense Amount (BDT)</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">৳</span>
+              <input 
+                type="number" 
+                required 
+                value={amountBDT}
+                onChange={(e) => setAmountBDT(e.target.value)}
+                placeholder="e.g. 50000"
+                className="w-full bg-[#1c1c1c] border border-rose-500/10 rounded-xl py-3 pl-10 pr-4 text-white outline-none focus:border-rose-500/50 focus:ring-4 focus:ring-rose-500/5 transition-all text-lg font-mono text-center tracking-wider"
+              />
+            </div>
+            <p className="text-[10px] text-gray-500 mt-1">Directly deducted from the unified Company Capital Pool.</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-5">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Exchange Rate (USD)</label>
+              <input type="number" required value={exchangeRate} onChange={(e) => setExchangeRate(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50 text-center font-mono" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Incurred Date</label>
+              <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50 [color-scheme:dark] text-center uppercase tracking-wider text-sm" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Project Attribution (Optional)</label>
+            <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50 appearance-none font-medium text-center">
+              <option value="">Operational Overhead</option>
+              {projects.map(p => <option key={p._id} value={p._id}>{p.title}</option>)}
+            </select>
+          </div>
+
+          <div className="flex gap-4 pt-4">
+            <button type="button" onClick={() => setShowAddForm(false)} className="flex-1 py-4 bg-[#1c1c1c] hover:bg-[#252525] rounded-2xl text-sm font-semibold text-gray-400">Cancel</button>
+            <button type="submit" disabled={isSubmitting} className="flex-[2] py-4 bg-rose-500 hover:bg-rose-600 text-white font-black rounded-2xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 group transition-all">
+              {isSubmitting ? "Saving..." : "Record Expense"}
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        </form>
+      </Modal>
+ )}
+
+      <Modal isOpen={showEditForm} onClose={closeEditForm} className="max-w-lg">
+        <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-blue-500/10 to-transparent">
+          <div>
+            <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+              <Edit2 className="w-5 h-5 text-blue-500" /> Edit Record & Recalculate
+            </h2>
+            <p className="text-gray-500 text-sm mt-1">Operational disbursement editing.</p>
+          </div>
+          <button onClick={closeEditForm} className="text-gray-500 hover:text-white transition-colors bg-white/5 p-2 rounded-full">✕</button>
         </div>
-      )}
+        
+        <form onSubmit={handleEditExpense} className="p-8 space-y-5">
+          <div className="grid grid-cols-2 gap-5">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Type</label>
+              <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50 appearance-none font-medium text-center">
+                <option value="SOFTWARE">Software / API</option>
+                <option value="MARKETING">Marketing</option>
+                <option value="LEGAL">Legal / Govt</option>
+                <option value="DEVICE">Hardware / Asset</option>
+                <option value="OTHER">Other Config</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Date</label>
+              <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50 text-center uppercase tracking-wider text-sm" style={{ colorScheme: "dark" }} />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center justify-between ml-1">
+              <span>Total Amount (BDT)</span>
+              {amountBDT && (
+                <span className="text-primary font-mono bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">
+                  ≈ ${(parseFloat(amountBDT) / (parseFloat(exchangeRate) || 120)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD
+                </span>
+              )}
+            </label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-500 font-mono">৳</span>
+              <input type="number" step="0.01" required value={amountBDT} onChange={(e) => setAmountBDT(e.target.value)} className="w-full pl-9 pr-4 py-3 bg-[#1c1c1c] border border-white/5 rounded-2xl focus:border-rose-500/50 text-white font-mono outline-none text-center tracking-wider" placeholder="0.00" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-5">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Reason</label>
+              <input type="text" required value={description} onChange={(e) => setDescription(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50 text-center" placeholder="e.g. Server Renewal" />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Vendor (Opt)</label>
+              <input type="text" value={vendor} onChange={(e) => setVendor(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50 text-center" placeholder="e.g. AWS" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Project Attribution (Optional)</label>
+            <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-rose-500/50 appearance-none font-medium text-center">
+              <option value="">Operational Overhead</option>
+              {projects.map(p => <option key={p._id} value={p._id}>{p.title}</option>)}
+            </select>
+          </div>
+
+          <div className="flex gap-4 pt-4">
+            <button type="button" onClick={closeEditForm} className="flex-1 py-4 bg-[#1c1c1c] hover:bg-[#252525] rounded-2xl text-sm font-semibold text-gray-400">Cancel</button>
+            <button type="submit" disabled={isSubmitting} className="flex-[2] py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-2xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 group transition-all">
+              {isSubmitting ? "Updating..." : "Update Expense"}
+              <Edit2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal 

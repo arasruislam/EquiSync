@@ -49,22 +49,22 @@ export async function GET() {
       projectStatsAgg,
       totalPendingInvAgg
     ] = await Promise.all([
-      Investment.aggregate([{ $match: { isDeleted: false } }, { $group: { _id: null, total: { $sum: "$amountUSD" } } }]),
+      Investment.aggregate([{ $match: { isDeleted: false } }, { $group: { _id: null, totalBDT: { $sum: "$amountBDT" } } }]),
       Investment.aggregate([
         { $match: { isDeleted: false } },
         { $unwind: "$contributions" },
         { $match: { "contributions.status": "CLEARED" } },
         { $group: { 
             _id: null, 
-            total: { 
-              $sum: { $ifNull: ["$contributions.paidAmountUSD", "$contributions.amountUSD"] } 
+            totalBDT: { 
+              $sum: { $ifNull: ["$contributions.paidAmountBDT", "$contributions.amountBDT"] }
             } 
         } }
       ]),
       FiverrIncome.aggregate([{ $match: { isDeleted: false, type: "GREEN" } }, { $group: { _id: null, total: { $sum: "$amountUSD" } } }]),
       FiverrIncome.aggregate([{ $match: { isDeleted: false, type: "WITHDRAWN" } }, { $group: { _id: null, total: { $sum: "$amountUSD" } } }]),
       Payout.aggregate([{ $match: { isDeleted: false } }, { $group: { _id: null, total: { $sum: "$amountUSD" } } }]),
-      Expense.aggregate([{ $match: { isDeleted: false } }, { $group: { _id: null, total: { $sum: "$amountUSD" } } }]),
+      Expense.aggregate([{ $match: { isDeleted: false } }, { $group: { _id: null, totalBDT: { $sum: "$amountBDT" } } }]),
       
       // Monthly Marketplace Income
       FiverrIncome.aggregate([
@@ -75,13 +75,13 @@ export async function GET() {
       // Monthly Expenses
       Expense.aggregate([
         { $match: { isDeleted: false, date: { $gte: startOfMonth } } },
-        { $group: { _id: null, total: { $sum: "$amountUSD" } } }
+        { $group: { _id: null, totalBDT: { $sum: "$amountBDT" } } }
       ]),
 
       // YTD Expenses
       Expense.aggregate([
         { $match: { isDeleted: false, date: { $gte: startOfYear } } },
-        { $group: { _id: null, total: { $sum: "$amountUSD" } } }
+        { $group: { _id: null, totalBDT: { $sum: "$amountBDT" } } }
       ]),
 
       // Project Stats
@@ -97,9 +97,9 @@ export async function GET() {
         { $match: { "contributions.status": "PENDING" } },
         { $group: { 
             _id: null, 
-            total: { 
+            totalBDT: { 
               $sum: { 
-                $subtract: ["$contributions.amountUSD", { $ifNull: ["$contributions.paidAmountUSD", 0] }] 
+                $subtract: ["$contributions.amountBDT", { $ifNull: ["$contributions.paidAmountBDT", 0] }] 
               } 
             } 
         } }
@@ -185,19 +185,29 @@ export async function GET() {
 
     // Store only GLOBAL, role-agnostic data in the cache
     // coFounderStats (personal) is deliberately excluded — it's computed per-request
+    // Final derived values for summary (Using current average exchange rate of 120 as fallback)
+    const activeRate = 120; // Re-fetching live rate here is expensive, so we use a standard or pass it.
+    
     const globalPayload = {
       summary: {
-        totalInvestments: investments[0]?.total || 0,
-        clearedInvestmentsUSD: clearedInvestments[0]?.total || 0,
+        totalInvestments: (investments[0]?.totalBDT || 0) / activeRate,
+        totalInvestmentsBDT: investments[0]?.totalBDT || 0,
+        clearedInvestmentsUSD: (clearedInvestments[0]?.totalBDT || 0) / activeRate,
+        clearedInvestmentsBDT: clearedInvestments[0]?.totalBDT || 0,
         totalFiverrGreen: fiverrGreen[0]?.total || 0,
         totalFiverrWithdrawn: fiverrWithdrawn[0]?.total || 0,
         totalPayouts: payouts[0]?.total || 0,
-        totalExpenses: expenses[0]?.total || 0,
+        totalExpenses: (expenses[0]?.totalBDT || 0) / activeRate,
+        totalExpensesBDT: expenses[0]?.totalBDT || 0,
         monthlyIncome: monthlyIncomeAgg[0]?.total || 0,
-        monthlyExpense: monthlyExpenseAgg[0]?.total || 0,
-        ytdExpense: ytdExpenseAgg[0]?.total || 0,
-        totalPendingDuesUSD: totalPendingInvAgg[0]?.total || 0,
-        companyBalance: (clearedInvestments[0]?.total || 0) + (fiverrWithdrawn[0]?.total || 0) - (payouts[0]?.total || 0) - (expenses[0]?.total || 0),
+        monthlyExpense: (monthlyExpenseAgg[0]?.totalBDT || 0) / activeRate,
+        monthlyExpenseBDT: monthlyExpenseAgg[0]?.totalBDT || 0,
+        ytdExpense: (ytdExpenseAgg[0]?.totalBDT || 0) / activeRate,
+        ytdExpenseBDT: ytdExpenseAgg[0]?.totalBDT || 0,
+        totalPendingDuesUSD: (totalPendingInvAgg[0]?.totalBDT || 0) / activeRate,
+        totalPendingDuesBDT: totalPendingInvAgg[0]?.totalBDT || 0,
+        companyBalance: ((clearedInvestments[0]?.totalBDT || 0) / activeRate) + (fiverrWithdrawn[0]?.total || 0) - (payouts[0]?.total || 0) - ((expenses[0]?.totalBDT || 0) / activeRate),
+        companyBalanceBDT: (clearedInvestments[0]?.totalBDT || 0) + ((fiverrWithdrawn[0]?.total || 0) * activeRate) - ((payouts[0]?.total || 0) * activeRate) - (expenses[0]?.totalBDT || 0),
         projectStats
       },
       // Full matrix — all 3 founders — always included regardless of who is requesting

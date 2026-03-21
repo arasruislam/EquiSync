@@ -17,6 +17,7 @@ import {
   DollarSign
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { Modal } from "@/components/ui/Modal";
 
 interface Payout {
   _id: string;
@@ -215,74 +216,70 @@ export default function PayoutsPage() {
         </div>
       </div>
 
-      {showAddForm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-400">
-          <div className="w-full max-w-lg bg-[#141414] border border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
-            <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-indigo-500/10 to-transparent">
-              <div>
-                <h2 className="text-2xl font-bold text-white tracking-tight">Record Payout</h2>
-                <p className="text-gray-500 text-sm mt-1">Disburse internal company funds.</p>
-              </div>
-              <button onClick={() => setShowAddForm(false)} className="text-gray-500 hover:text-white transition-colors bg-white/5 p-2 rounded-full">✕</button>
-            </div>
-            
-            <form onSubmit={handleCreatePayout} className="p-8 space-y-5">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Recipient Member</label>
-                <select 
-                  required
-                  value={recipientId}
-                  onChange={(e) => setRecipientId(e.target.value)}
-                  className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-indigo-500/50 appearance-none font-medium cursor-pointer"
-                >
-                  <option value="">Select Member</option>
-                  {users.map(u => <option key={u._id} value={u._id}>{u.name} ({u.role})</option>)}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-5">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Amount (BDT)</label>
-                  <div className="relative group">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-500" />
-                    <input type="number" required value={amountBDT} onChange={(e) => setAmountBDT(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 pl-10 text-white outline-none focus:border-indigo-500/50 font-bold" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Payout Type</label>
-                  <select value={type} onChange={(e) => setType(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-indigo-500/50 appearance-none font-medium">
-                    <option value="SALARY">Salary</option>
-                    <option value="BONUS">Bonus</option>
-                    <option value="COMMISSION">Commission</option>
-                    <option value="PROJECT_SHARE">Project Share</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Link to Project (Optional)</label>
-                <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-indigo-500/50 appearance-none font-medium">
-                  <option value="">No Project Affiliation</option>
-                  {projects.map(p => <option key={p._id} value={p._id}>{p.title}</option>)}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Reference Note</label>
-                <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Feb 2026 Salary or Performance Bonus" rows={2} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-indigo-500/50 resize-none" />
-              </div>
-
-              <div className="flex gap-4 pt-4">
-                <button type="button" onClick={() => setShowAddForm(false)} className="flex-1 py-4 bg-[#1c1c1c] hover:bg-[#252525] rounded-2xl text-sm font-semibold text-gray-400">Cancel</button>
-                <button type="submit" disabled={isSubmitting} className="flex-[2] py-4 bg-indigo-500 hover:bg-indigo-600 text-white font-black rounded-2xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 group transition-all">
-                  {isSubmitting ? "Processing..." : "Confirm Payout"}
-                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
-              </div>
-            </form>
+      <Modal isOpen={showAddForm} onClose={() => setShowAddForm(false)} className="max-w-lg">
+        <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-indigo-500/10 to-transparent">
+          <div>
+            <h2 className="text-2xl font-bold text-white tracking-tight">Record Payout</h2>
+            <p className="text-gray-500 text-sm mt-1">Disburse internal company funds.</p>
           </div>
+          <button onClick={() => setShowAddForm(false)} className="text-gray-500 hover:text-white transition-colors bg-white/5 p-2 rounded-full">✕</button>
         </div>
-      )}
+        
+        <form onSubmit={handleCreatePayout} className="p-8 space-y-5">
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Recipient Member</label>
+            <select 
+              required
+              value={recipientId}
+              onChange={(e) => setRecipientId(e.target.value)}
+              className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-indigo-500/50 appearance-none font-medium cursor-pointer"
+            >
+              <option value="">Select Member</option>
+              {users.map(u => <option key={u._id} value={u._id}>{u.name} ({u.role})</option>)}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-5">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Amount (BDT)</label>
+              <div className="relative group">
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-indigo-500" />
+                <input type="number" required value={amountBDT} onChange={(e) => setAmountBDT(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 pl-10 text-white outline-none focus:border-indigo-500/50 font-bold" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Payout Type</label>
+              <select value={type} onChange={(e) => setType(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-indigo-500/50 appearance-none font-medium">
+                <option value="SALARY">Salary</option>
+                <option value="BONUS">Bonus</option>
+                <option value="COMMISSION">Commission</option>
+                <option value="PROJECT_SHARE">Project Share</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Link to Project (Optional)</label>
+            <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-indigo-500/50 appearance-none font-medium">
+              <option value="">No Project Affiliation</option>
+              {projects.map(p => <option key={p._id} value={p._id}>{p.title}</option>)}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Reference Note</label>
+            <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Feb 2026 Salary or Performance Bonus" rows={2} className="w-full bg-[#1c1c1c] border border-white/5 rounded-2xl py-3 px-4 text-white outline-none focus:border-indigo-500/50 resize-none" />
+          </div>
+
+          <div className="flex gap-4 pt-4">
+            <button type="button" onClick={() => setShowAddForm(false)} className="flex-1 py-4 bg-[#1c1c1c] hover:bg-[#252525] rounded-2xl text-sm font-semibold text-gray-400">Cancel</button>
+            <button type="submit" disabled={isSubmitting} className="flex-[2] py-4 bg-indigo-500 hover:bg-indigo-600 text-white font-black rounded-2xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 group transition-all">
+              {isSubmitting ? "Processing..." : "Confirm Payout"}
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import Notification from "@/models/Notification";
 import { emitSocketEvent } from "@/lib/socket-emit";
 import { cache } from "@/lib/cache";
 import { logActivity } from "@/lib/audit";
+import { revalidatePath } from "next/cache";
 
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
@@ -33,19 +34,18 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     contribution.status = status;
     if (status === "CLEARED") {
       contribution.paidAmountBDT = contribution.amountBDT;
-      contribution.paidAmountUSD = contribution.amountUSD;
     } else {
       contribution.paidAmountBDT = 0;
-      contribution.paidAmountUSD = 0;
     }
     await investment.save();
 
 
 
     // Notify the specific Co-Founder that their status changed
+    const amountUSD_Display = Number((investment.amountBDT / investment.exchangeRate).toFixed(2));
     await Notification.create({
       recipient: coOwnerId,
-      message: `Your investment share for ${investment.amountUSD} USD has been marked as ${status} by the Super Admin.`,
+      message: `Your investment share for ${amountUSD_Display} USD has been marked as ${status} by the Super Admin.`,
       type: "FINANCE",
       url: "/dashboard/investments"
     });
@@ -63,6 +63,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     });
 
     cache.flushAll();
+
+    // Purge Next.js Data Cache for all relevant routes
+    revalidatePath("/dashboard/investments");
+    revalidatePath("/api/reports");
+    revalidatePath("/dashboard");
+
     return NextResponse.json(investment);
   } catch (error) {
     return NextResponse.json({ error: "Update failed" }, { status: 500 });
@@ -79,10 +85,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   await dbConnect();
 
   try {
-    const { amountUSD, amountBDT, exchangeRate, note, date } = await req.json();
+    const { amountBDT, exchangeRate, note, date } = await req.json();
 
-    // Re-calculate the mathematical equal split
-    const splitUSD = Number((amountUSD / 3).toFixed(2));
+    // Re-calculate the mathematical equal split (BDT SSOT)
     const splitBDT = Number((amountBDT / 3).toFixed(2));
 
     const investment = await Investment.findById(params.id);
@@ -90,14 +95,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
     const oldValue = investment.toObject();
 
-    // Complex mathematical recalculation retaining historical paid amounts
+    // Complex mathematical recalculation retaining historical paid amounts (BDT SSOT)
     investment.contributions.forEach((c: any) => {
       const actualPaidBDT = (c.status === "CLEARED" && !c.paidAmountBDT) ? c.amountBDT : (c.paidAmountBDT || 0);
-      const actualPaidUSD = (c.status === "CLEARED" && !c.paidAmountUSD) ? c.amountUSD : (c.paidAmountUSD || 0);
 
-      c.amountUSD = splitUSD;
       c.amountBDT = splitBDT;
-      c.paidAmountUSD = actualPaidUSD;
       c.paidAmountBDT = actualPaidBDT;
       
       if (splitBDT > actualPaidBDT) {
@@ -107,7 +109,6 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       }
     });
     
-    investment.amountUSD = amountUSD;
     investment.amountBDT = amountBDT;
     investment.exchangeRate = exchangeRate;
     investment.note = note;
@@ -170,9 +171,10 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
 
     if (!investment) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+    const amountUSD_Display = Number((investment.amountBDT / investment.exchangeRate).toFixed(2));
     const notifications = investment.contributions.map((c: any) => ({
       recipient: c.coOwner,
-      message: `An investment (${investment.amountUSD} USD) has been permanently deleted by the Super Admin.`,
+      message: `An investment (${amountUSD_Display} USD) has been permanently deleted by the Super Admin.`,
       type: "SYSTEM",
       url: "/dashboard/investments"
     }));
@@ -191,6 +193,12 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     });
 
     cache.flushAll();
+
+    // Purge Next.js Data Cache for all relevant routes
+    revalidatePath("/dashboard/investments");
+    revalidatePath("/api/reports");
+    revalidatePath("/dashboard");
+
     return NextResponse.json({ message: "Investment deleted safely" });
   } catch (error) {
     return NextResponse.json({ error: "Deletion failed" }, { status: 500 });

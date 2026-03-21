@@ -9,6 +9,7 @@ import { createLedgerEntry } from "@/lib/ledger";
 import { emitSocketEvent } from "@/lib/socket-emit";
 import { cache } from "@/lib/cache";
 import { logActivity } from "@/lib/audit";
+import { revalidatePath } from "next/cache";
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -71,7 +72,7 @@ export async function GET(req: Request) {
 
     const investments = await Investment.find(query)
       .populate("contributions.coOwner", "name email image")
-      .sort({ date: -1 });
+      .sort({ date: -1, createdAt: -1 });
 
     return NextResponse.json(investments);
   } catch (error) {
@@ -98,11 +99,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields: amountBDT, exchangeRate" }, { status: 400 });
     }
 
-    // Base is BDT. Calculate USD mathematically.
-    const amountUSD = Number((amountBDT / exchangeRate).toFixed(2));
-
-    // Mathematical Division: 3-way equal split for Founders
-    const splitUSD = Number((amountUSD / 3).toFixed(2));
+    // Mathematical Division: 3-way equal split for Founders (BDT is SSOT)
     const splitBDT = Number((amountBDT / 3).toFixed(2));
 
     // Fetch exactly the 3 Co-Founders (Rahul, Ashraful, Saifur) 
@@ -112,10 +109,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `System requires exactly 3 CO_FOUNDER accounts to perform equal division. Found ${coFounders.length}` }, { status: 400 });
     }
 
-    // Automatically generate the Pending contributions list
+    // Automatically generate the Pending contributions list (BDT SSOT)
     const automatedContributions = coFounders.map(founder => ({
       coOwner: founder._id,
-      amountUSD: splitUSD,
       amountBDT: splitBDT,
       status: "PENDING"
     }));
@@ -123,7 +119,6 @@ export async function POST(req: Request) {
     // Create Investment
     const investment = await Investment.create({
       contributions: automatedContributions,
-      amountUSD,
       amountBDT,
       exchangeRate,
       note,
@@ -135,7 +130,7 @@ export async function POST(req: Request) {
     const transaction = await createLedgerEntry({
       type: "INVESTMENT",
       direction: "CREDIT",
-      amountUSD,
+      amountUSD: Number((amountBDT / exchangeRate).toFixed(2)),
       amountBDT,
       exchangeRate,
       sourceModel: "Investment",
@@ -150,9 +145,12 @@ export async function POST(req: Request) {
     await investment.save();
 
     // Dispatch automated Notification to all 3 Co-Founders
+    const amountUSD_Display = Number((amountBDT / exchangeRate).toFixed(2));
+    const splitUSD_Display = Number((amountUSD_Display / 3).toFixed(2));
+
     const notifications = coFounders.map(founder => ({
       recipient: founder._id,
-      message: `A new investment of ${amountUSD} USD (split ${splitUSD} USD each) was created. Please check your Pending Dues.`,
+      message: `A new investment of ${amountUSD_Display} USD (split ${splitUSD_Display} USD each) was created. Please check your Pending Dues.`,
       type: "FINANCE",
       url: "/dashboard/investments"
     }));
@@ -170,6 +168,12 @@ export async function POST(req: Request) {
     });
 
     cache.flushAll(); // Purge reports memory cache forcing fresh read
+    
+    // Purge Next.js Data Cache for all relevant routes
+    revalidatePath("/dashboard/investments");
+    revalidatePath("/api/reports");
+    revalidatePath("/dashboard");
+
     return NextResponse.json(investment, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });

@@ -9,6 +9,7 @@ import Notification from "@/models/Notification";
 import { emitSocketEvent } from "@/lib/socket-emit";
 import { cache } from "@/lib/cache";
 import { logActivity } from "@/lib/audit";
+import { revalidatePath } from "next/cache";
 
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
@@ -21,7 +22,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   await dbConnect();
 
   try {
-    const { category, amountBDT, amountUSD, exchangeRate, description, vendor, project, date } = await req.json();
+    const { category, amountBDT, exchangeRate, description, vendor, project, date } = await req.json();
 
     const expense = await Expense.findById(params.id);
     if (!expense) return NextResponse.json({ error: "Expense not found" }, { status: 404 });
@@ -29,7 +30,6 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const oldValue = expense.toObject();
 
     expense.category = category;
-    expense.amountUSD = amountUSD;
     expense.amountBDT = amountBDT;
     expense.exchangeRate = exchangeRate;
     expense.description = description;
@@ -60,6 +60,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     });
 
     cache.flushAll();
+
+    // Purge Next.js Data Cache for all relevant routes
+    revalidatePath("/dashboard");
+    revalidatePath("/api/reports");
+    revalidatePath("/dashboard/expenses");
+
     return NextResponse.json(expense);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -107,6 +113,12 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     });
 
     cache.flushAll();
+
+    // Purge Next.js Data Cache for all relevant routes
+    revalidatePath("/dashboard");
+    revalidatePath("/api/reports");
+    revalidatePath("/dashboard/expenses");
+
     return NextResponse.json({ message: "Expense deleted safely" });
   } catch (error) {
     return NextResponse.json({ error: "Deletion failed" }, { status: 500 });

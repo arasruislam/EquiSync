@@ -30,13 +30,20 @@ import ResourcePieChart from "@/components/dashboard/ResourcePieChart";
 
 interface Summary {
   totalInvestments: number;
+  totalInvestmentsBDT: number;
+  clearedInvestmentsUSD: number;
+  clearedInvestmentsBDT: number;
   totalFiverrGreen: number;
   totalFiverrWithdrawn: number;
   totalPayouts: number;
   totalExpenses: number;
+  totalExpensesBDT: number;
   companyBalance: number;
+  companyBalanceBDT: number;
   ytdExpense: number;
+  ytdExpenseBDT: number;
   totalPendingDuesUSD: number;
+  totalPendingDuesBDT: number;
 }
 
 interface CoFounderStat {
@@ -159,25 +166,27 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* Mini Summary Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <SummaryWidget 
-          label="Total Capital"
-          value={summary.companyBalance}
+          label="Total Balance"
+          amountBDT={summary.companyBalanceBDT}
+          amountUSD={summary.companyBalance}
           icon={Wallet}
           themeColor="emerald"
           description="Liquid Central Vault"
         />
         <SummaryWidget 
           label="YTD Operating Expense"
-          value={summary.ytdExpense || 0}
+          amountBDT={summary.ytdExpenseBDT}
+          amountUSD={summary.ytdExpense}
           icon={TrendingDown}
           themeColor="red"
           description="Year-to-Date Outflow"
         />
         <SummaryWidget 
           label="Total Pending Dues"
-          value={summary.totalPendingDuesUSD}
+          amountBDT={summary.totalPendingDuesBDT}
+          amountUSD={summary.totalPendingDuesUSD}
           icon={Info}
           themeColor="amber"
           description="Market Commitment"
@@ -215,13 +224,13 @@ export default function ReportsPage() {
 
                   return {
                     name: founder.name.split(" ")[0],
-                    value: founder.totalInvestedBDT / 120,
+                    value: founder.totalInvestedBDT,
                     color,
                     glow
                   };
                 }),
-                { name: "Global Revenue", value: summary.totalFiverrWithdrawn, color: "#10b981", glow: "rgba(16, 185, 129, 0.5)" },
-                { name: "Direct Costs", value: summary.totalPayouts + summary.totalExpenses, color: "#ef4444", glow: "rgba(239, 68, 68, 0.5)" }
+                { name: "Global Rev", value: summary.totalFiverrWithdrawn * 120, color: "#10b981", glow: "rgba(16, 185, 129, 0.5)" },
+                { name: "Direct Cost", value: (summary.totalPayouts + summary.totalExpenses) * 120, color: "#ef4444", glow: "rgba(239, 68, 68, 0.5)" }
               ]}
             />
 
@@ -257,14 +266,14 @@ export default function ReportsPage() {
                     </span>
                   </div>
                   <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(0,0,0,0.5)]" 
-                      style={{ 
-                        width: `${(founder.totalInvestedBDT / 120 / (summary.totalInvestments + summary.totalFiverrWithdrawn + summary.totalPayouts + summary.totalExpenses)) * 100}%`,
-                        backgroundColor: color,
-                        boxShadow: `0 0 10px ${color}33`
-                      }} 
-                    />
+                        <div 
+                          className="h-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(0,0,0,0.5)]" 
+                          style={{ 
+                            width: `${(founder.totalInvestedBDT / (summary.totalInvestmentsBDT + (summary.totalFiverrWithdrawn * 120) + (summary.totalPayouts * 120) + summary.totalExpensesBDT)) * 100}%`,
+                            backgroundColor: color,
+                            boxShadow: `0 0 10px ${color}33`
+                          }} 
+                        />
                   </div>
                 </div>
               )})}
@@ -287,7 +296,7 @@ export default function ReportsPage() {
                     <div 
                       className={cn("h-full transition-all duration-1000 ease-out", item.bgClass)} 
                       style={{ 
-                        width: `${(item.value / (summary.totalInvestments + summary.totalFiverrWithdrawn + summary.totalPayouts + summary.totalExpenses)) * 100}%`,
+                        width: `${(item.value * 120 / (summary.totalInvestmentsBDT + (summary.totalFiverrWithdrawn * 120) + (summary.totalPayouts * 120) + summary.totalExpensesBDT)) * 100}%`,
                         boxShadow: `0 0 10px ${item.color}33`
                       }} 
                     />

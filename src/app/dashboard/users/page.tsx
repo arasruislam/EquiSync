@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useGlobalLoading } from "@/components/providers/LoadingProvider";
+import { Modal } from "@/components/ui/Modal";
 
 interface UserRecord {
   _id: string;
@@ -183,9 +184,9 @@ export default function UserManagementPage() {
       </div>
 
       {/* Edit Modal */}
-      {editingUser && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in duration-400">
-          <div className="w-full max-w-lg bg-[#141414] border border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
+      <Modal isOpen={!!editingUser} onClose={() => setEditingUser(null)} className="max-w-lg">
+        {!editingUser ? null : (
+          <>
             <div className="p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-primary/10 to-transparent">
               <div>
                 <h2 className="text-2xl font-bold text-white tracking-tight">Administrative Override</h2>
@@ -238,10 +239,10 @@ export default function UserManagementPage() {
               </div>
 
               <div className="p-4 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl flex gap-3">
-                 <Shield className="w-5 h-5 text-indigo-500 shrink-0" />
-                 <p className="text-[10px] text-gray-500 leading-relaxed font-bold uppercase tracking-tight">
-                   Security Warning: Updating a user's role will immediately revoke or grant permissions across all financial modules. This action is logged in the system audit trail.
-                 </p>
+                  <Shield className="w-5 h-5 text-indigo-500 shrink-0" />
+                  <p className="text-[10px] text-gray-500 leading-relaxed font-bold uppercase tracking-tight">
+                    Security Warning: Updating a user's role will immediately revoke or grant permissions across all financial modules. This action is logged in the system audit trail.
+                  </p>
               </div>
 
               <div className="flex gap-4 pt-4">
@@ -252,9 +253,9 @@ export default function UserManagementPage() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
     </div>
   );
 }

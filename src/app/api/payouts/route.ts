@@ -15,7 +15,7 @@ export async function GET() {
     const payouts = await Payout.find({ isDeleted: false })
       .populate("recipient", "name email role image")
       .populate("project", "title")
-      .sort({ date: -1 });
+      .sort({ date: -1, createdAt: -1 });
 
     return NextResponse.json(payouts);
   } catch (error) {
